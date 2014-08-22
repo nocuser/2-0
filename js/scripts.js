@@ -111,8 +111,33 @@ $(function(){
 		if(_PresentationSkip || _PresentationSkipBackwards){
 			//ES SKIP?
 			if(_PresentationSkip){
-				//Inicio el slide normalmente
-				$(this).startSlide();
+				//Verifico que NO tenga Survey y Eva Obligatorios
+				if(_PresentationSurveyMandatory){
+					var continua = 1;
+					//Reviso si no existen survey/eva previos NO realizados
+					$(this).siblings().each(function(){
+						var sld = $(this);
+						//Revisa si en los slides previos
+						//de tipo Survey o Quiz
+						//alguno NO está finalizado
+						if ((sld.attr('data-order')<slideNext) && (sld.attr('data-slidetype')=='Survey' || sld.attr('data-slidetype')=='Quiz') && (sld.attr('data-aprobEstado')!=='F')){
+							//NO puede reproducir, debe finalizar los surveys o evaluaciones
+							new jBox('Notice',{
+								content: 'The ' + sld.attr('data-slidetype') + ' ' + sld.attr('data-slidename') + ' must be answered in order to advance',
+								color: 'red'
+							});
+							continua = 0;
+						};
+					});
+					//PUede reproducir el slide.
+					if (continua==1){
+						$(this).startSlide();
+					}
+				}
+				else{
+					//Inicio el slide normalmente
+					$(this).startSlide();
+				}
 			}else{
 				//ES BACKWARDS
 				//Si el slide que quiero reproducir está antes que el actual puedo reproducirlo
@@ -249,6 +274,8 @@ function _setMains(){
 		_PresentationSkip = presentation.PresentationSkip;
 		//Guardo el Skip Backwards
 		_PresentationSkipBackwards = presentation.PresentationSkipBackwards;
+		//Guardo el PresentationSurveyMandatory
+		_PresentationSurveyMandatory = presentation.PresentationSurveyMandatory;
 		//Muestro el titulo en el Stage
 		$("#spanTitle").text(_PresentationTitle);
 	}
@@ -399,7 +426,7 @@ function getSlides(){
 			}else{
 				var dataLocation = slides[i].SlideLocation;
 			}
-			html += '<li class="listItem" data-totalFrames="'+slides[i].TotalFrames+'" data-order="'+slides[i].PlayListOrder+'" data-resourcelocation="'+dataLocation+'" data-slideType="'+slides[i].SlideType+'" data-sldId="'+slides[i].PlayListSlideId+'" data-SId="'+slides[i].SId+'" data-trainer="'+slides[i].Speaker+'">'+slides[i].PlayListSlideName+'</li>';
+			html += '<li class="listItem" data-totalFrames="'+slides[i].TotalFrames+'" data-order="'+slides[i].PlayListOrder+'" data-resourcelocation="'+dataLocation+'" data-slideType="'+slides[i].SlideType+'" data-sldId="'+slides[i].PlayListSlideId+'" data-SId="'+slides[i].SId+'" data-trainer="'+slides[i].Speaker+'" data-aprobOK="'+slides[i].EvaAprobOK+'" data-aprobPercent="'+slides[i].EvaAprobPercent+'" data-aprobEstado="'+slides[i].EvaAprobEstado+'" data-slidename="'+slides[i].PlayListSlideName+'">'+slides[i].PlayListSlideName+'</li>';
 		};
 		//Cierro la lista de slides.
 		html += '</ol>';
