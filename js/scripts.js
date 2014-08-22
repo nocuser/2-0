@@ -7,6 +7,7 @@ var	activeMedia,
 	ek,
 	gFlag = false,
 	interval,
+	interval_onYoutube,
 	isPlaying = false,
 	isPlayingType,
 	wasPlayed = false,
@@ -58,9 +59,7 @@ function _keepSession(){
 		type: "POST",
 		url: "../../aws_getPresentation_keepSession.aspx"
 	}).done(function(){
-		console.log('KeepSession ejecutado correctamente');
 	}).fail(function(){
-		console.log('No se pudo ejecutar KeepSession');
 	})
 }
 
@@ -681,8 +680,6 @@ function playPause(){
 						sliderDuration.value = tiempo * (1000 / total);
 						fs_sliderDuration.value = tiempo * (1000 / total);
 
-						console.log(tiempo * (1000 / total));
-
 						var curmins = Math.floor(tiempo / 60);
 						var cursecs = Math.floor(tiempo - curmins * 60);
 						var durmins = Math.floor(total / 60);
@@ -912,6 +909,58 @@ function seekTimeUpdate(){
 	}
 }
 
+function seekYoutubeUpdate(){
+	var updateYtbTime;
+	if (video.getPlayerState() == 1){ //Si está reproduciendose
+		isPlaying = true;
+		$("#playPauseIcon").removeClass('fa-play').addClass("fa-pause"); 	//cambio el icono de play por el de pausa.
+		$("#fs_playPauseIcon").removeClass('fa-play').addClass("fa-pause"); //cambio el icono de play por el de pausa.
+		updateYtbTime = setInterval(
+			function(){
+				if(isPlayingType=='ytb'){
+					var tiempo = video.getCurrentTime();
+					var total = video.getDuration();
+
+					sliderDuration.value = tiempo * (1000 / total);
+					fs_sliderDuration.value = tiempo * (1000 / total);
+
+					var curmins = Math.floor(tiempo / 60);
+					var cursecs = Math.floor(tiempo - curmins * 60);
+					var durmins = Math.floor(total / 60);
+					var dursecs = Math.floor(total - durmins * 60);
+					//Si son menores a 10, les agrego un cero adelante.
+					if(cursecs < 10){ cursecs = "0"+cursecs; }
+					if(dursecs < 10){ dursecs = "0"+dursecs; }
+					if(curmins < 10){ curmins = "0"+curmins; }
+					if(durmins < 10){ durmins = "0"+durmins; }
+					//Genero los textos de los valores.
+					var _curTime = curmins+":"+cursecs
+					var _durTime = durmins+":"+dursecs
+					//Los muestro en pantalla.
+					$(".currentTime").text(curmins+":"+cursecs);
+					$(".videoDuration").text(durmins+":"+dursecs);
+
+					if(_PresentationPlaySlide=='A'){
+						if(video.getPlayerState()==0){ //Finalizó el video
+							isPlaying = false;
+							wasPlayed = true;
+							clearInterval(updateYtbTime);
+							clearInterval(interval_onYoutube);
+							cleanStage();
+							nextSlide();
+						}
+					}
+				}
+			},1000);
+	}else{
+		//Si el video NO está reproduciendo
+		$("#playPauseIcon").removeClass('fa-pause').addClass("fa-play"); //cambio el ícono de pausa a play neuvamente.
+		$("#fs_playPauseIcon").removeClass('fa-pause').addClass("fa-play"); //cambio el ícono de pausa a play neuvamente.
+		clearInterval(updateYtbTime);
+		isPlaying = false;
+	}
+}
+
 //funcion que setea las secciones
 function setSections(sLong){
 	//Busco cual es la seccion activa
@@ -1087,28 +1136,32 @@ $.fn.startSlide = function startSlide(){
 		var ytLocation = $(this).attr('data-resourcelocation');
 		$("#stage").animate({left:'0px'},'slow');
 		$("#evaStage").animate({left:'-9999px'},'slow');
+		if(_PresentationPlaySlide=='I'){
+			var ytCode = '<embed id="ytVideo" style="top: 0; left: 0;" width="100%" height="100%" frameborder="0" '
+						+'webkitallowfullscreen'
+						+' mozallowfullscreen'
+						+' allowfullscreen'
+						+' allowfullscreen="true"'
+						+' allowscriptaccess="always"'
+						+' quality="high"'
+						+' bgcolor="#000000"'
+						+' name="ytVideo"'
+						+' src="http://www.youtube.com/v/'+ytLocation+'?enablejsapi=1'
+							+'&version=3'
+							+'&playerapiid=ytplayer'
+							+'&controls=0'
+							+'&disablekb=1'
+							+'&iv_load_policy=3'
+							+'&modestbranding=1'
+							+'&rel=0'
+							+'&showinfo=0"'
+						+' type="application/x-shockwave-flash">';
+			$("#stageMain").append(ytCode);
+		}else{
+			var ytCode = '<embed id="ytVideo" style="top: 0; left: 0;" width="100%" height="100%" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen allowfullscreen="true" allowscriptaccess="always" quality="high" bgcolor="#333333" name="ytVideo" src="http://www.youtube.com/v/'+ytLocation+'?enablejsapi=1&version=3&playerapiid=ytplayer&controls=0&disablekb=1&iv_load_policy=3&modestbranding=1&rel=0&showinfo=0&autoplay=1" type="application/x-shockwave-flash">';
 
-		var ytCode = '<embed id="ytVideo" style="top: 0; left: 0;" width="100%" height="100%" frameborder="0" '
-					+'webkitallowfullscreen'
-					+' mozallowfullscreen'
-					+' allowfullscreen'
-					+' allowfullscreen="true"'
-					+' allowscriptaccess="always"'
-					+' quality="high"'
-					+' bgcolor="#000000"'
-					+' name="ytVideo"'
-					+' src="http://www.youtube.com/v/'+ytLocation+'?enablejsapi=1'
-						+'&version=3'
-						+'&playerapiid=ytplayer'
-						+'&controls=0'
-						+'&disablekb=1'
-						+'&iv_load_policy=3'
-						+'&modestbranding=1'
-						+'&rel=0'
-						+'&showinfo=0"'
-					+' type="application/x-shockwave-flash">';
-		$("#stageMain").append(ytCode);
-		video = document.getElementById('ytVideo');
+			$("#stageMain").append(ytCode);
+		}
 	}
 
 	//Si es una EVALUACION / ENCUESTA
@@ -1130,4 +1183,20 @@ $.fn.startSlide = function startSlide(){
 	$(this).addClass('active');
 	//return false se pone para evitar que se envié algun resultado a la variable destino donde se ejecutó la función. no se necesita nada del otro lado.
 	return false;
+}
+
+function onYouTubePlayerReady(){
+	video = document.getElementById('ytVideo');
+	video.setVolume(volumeControl.value);
+	interval_onYoutube = setInterval(function(){
+		if(video.getPlayerState()!=1){
+			//Si el video NO está reproduciendo
+			$("#playPauseIcon").removeClass('fa-pause').addClass("fa-play"); 	//cambio el ícono de pausa a play neuvamente.
+			$("#fs_playPauseIcon").removeClass('fa-pause').addClass("fa-play"); //cambio el ícono de pausa a play neuvamente.
+		}else{
+			$("#playPauseIcon").removeClass('fa-play').addClass("fa-pause"); 	//cambio el icono de play por el de pausa.
+			$("#fs_playPauseIcon").removeClass('fa-play').addClass("fa-pause"); //cambio el icono de play por el de pausa.
+			seekYoutubeUpdate();
+		}
+	})
 }
