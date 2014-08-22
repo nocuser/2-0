@@ -1,0 +1,417 @@
+{ "Approval" : 0,
+  "ApproveMessage" : "",
+  "AttemptsLeft" : 0,
+  "Description" : "",
+  "FailMessage" : "",
+  "ID" : 13,
+  "Name" : "Encuesta de opinión",
+  "Section" : [ { "ID" : 1,
+        "Name" : "Page   1",
+        "Order" : 2,
+        "Question" : [ { "Answer" : [ { "ID" : 1,
+                    "Order" : 0,
+                    "Title" : "Si",
+                    "Value" : 1
+                  },
+                  { "ID" : 2,
+                    "Order" : 0,
+                    "Title" : "No",
+                    "Value" : 2
+                  }
+                ],
+              "ID" : 1,
+              "IsRequired" : true,
+              "Order" : 1,
+              "QuestionType" : 2,
+              "SubTitle" : "",
+              "Title" : "Realiza inventario físico?",
+              "Value" : 1,
+              "hasOther" : false
+            } ]
+      },
+      { "ID" : 2,
+        "Name" : "Page   2",
+        "Order" : 3,
+        "Question" : [ { "Answer" : [ { "ID" : 1,
+                    "Order" : 0,
+                    "Title" : "Semanal",
+                    "Value" : 1
+                  },
+                  { "ID" : 2,
+                    "Order" : 0,
+                    "Title" : "Mensual",
+                    "Value" : 2
+                  },
+                  { "ID" : 3,
+                    "Order" : 0,
+                    "Title" : "Cada 3 meses",
+                    "Value" : 3
+                  },
+                  { "ID" : 4,
+                    "Order" : 0,
+                    "Title" : "Mayor a 3 meses",
+                    "Value" : 4
+                  }
+                ],
+              "ID" : 1,
+              "IsRequired" : true,
+              "Order" : 1,
+              "QuestionType" : 2,
+              "SubTitle" : "",
+              "Title" : "Cada cuanto realiza estos inventarios para el control de stock?",
+              "Value" : 1,
+              "hasOther" : false
+            } ]
+      },
+      { "ID" : 3,
+        "Name" : "Page   3",
+        "Order" : 4,
+        "Question" : [ { "Answer" : [ { "ID" : 1,
+                    "Order" : 0,
+                    "Title" : "Si",
+                    "Value" : 1
+                  },
+                  { "ID" : 2,
+                    "Order" : 0,
+                    "Title" : "No",
+                    "Value" : 2
+                  }
+                ],
+              "ID" : 1,
+              "IsRequired" : true,
+              "Order" : 1,
+              "QuestionType" : 2,
+              "SubTitle" : "",
+              "Title" : "Gestiona su stock por el sistema Enter Gestión o Soluciones Palm?",
+              "Value" : 1,
+              "hasOther" : false
+            } ]
+      },
+      { "ID" : 4,
+        "Name" : "Page   4",
+        "Order" : 5,
+        "Question" : [ { "Answer" : [ { "ID" : 1,
+                    "Order" : 0,
+                    "Title" : "Si",
+                    "Value" : 1
+                  },
+                  { "ID" : 2,
+                    "Order" : 0,
+                    "Title" : "No",
+                    "Value" : 2
+                  }
+                ],
+              "ID" : 1,
+              "IsRequired" : true,
+              "Order" : 1,
+              "QuestionType" : 2,
+              "SubTitle" : "",
+              "Title" : "De los controles que realiza obtiene resultados favorables?",
+              "Value" : 1,
+              "hasOther" : false
+            } ]
+      },
+      { "ID" : 5,
+        "Name" : "Page   5",
+        "Order" : 6,
+        "Question" : [ { "Answer" : [ { "ID" : 1,
+                    "Order" : 0,
+                    "Title" : "Si",
+                    "Value" : 1
+                  },
+                  { "ID" : 2,
+                    "Order" : 0,
+                    "Title" : "No",
+                    "Value" : 2
+                  }
+                ],
+              "ID" : 1,
+              "IsRequired" : true,
+              "Order" : 1,
+              "QuestionType" : 2,
+              "SubTitle" : "",
+              "Title" : "Sabe cuánto margina sobre el consignado?",
+              "Value" : 1,
+              "hasOther" : false
+            } ]
+      },
+      { "ID" : 6,
+        "Name" : "Page   6",
+        "Order" : 7,
+        "Question" : [ { "Answer" : [ { "ID" : 1,
+                    "Order" : 0,
+                    "Title" : "Si",
+                    "Value" : 1
+                  },
+                  { "ID" : 2,
+                    "Order" : 0,
+                    "Title" : "No",
+                    "Value" : 2
+                  }
+                ],
+              "ID" : 1,
+              "IsRequired" : false,
+              "Order" : 1,
+              "QuestionType" : 2,
+              "SubTitle" : "",
+              "Title" : "Los gastos realizados son los correctos?",
+              "Value" : 1,
+              "hasOther" : false
+            } ]
+      },
+      { "ID" : 7,
+        "Name" : "Page   1",
+        "Order" : 1,
+        "Question" : [ { "Answer" : [ { "GColumn" : [ { "ColumnOptions" : [ { "ID" : 1,
+                                "Order" : 0,
+                                "Title" : "Inconforme",
+                                "Value" : 1
+                              },
+                              { "ID" : 2,
+                                "Order" : 0,
+                                "Title" : "Algo inconforme",
+                                "Value" : 2
+                              },
+                              { "ID" : 3,
+                                "Order" : 0,
+                                "Title" : "Algo conforme",
+                                "Value" : 3
+                              },
+                              { "ID" : 4,
+                                "Order" : 0,
+                                "Title" : "Bastante conforme",
+                                "Value" : 4
+                              },
+                              { "ID" : 5,
+                                "Order" : 0,
+                                "Title" : "Muy conforme",
+                                "Value" : 5
+                              }
+                            ],
+                          "ColumnTitle" : "Opciones",
+                          "QuestionId" : 1
+                        } ],
+                    "ID" : 1,
+                    "Order" : 1,
+                    "Title" : "Calidad de los slides",
+                    "Value" : 0
+                  },
+                  { "GColumn" : [ { "ColumnOptions" : [ { "ID" : 1,
+                                "Order" : 0,
+                                "Title" : "Inconforme",
+                                "Value" : 1
+                              },
+                              { "ID" : 2,
+                                "Order" : 0,
+                                "Title" : "Algo inconforme",
+                                "Value" : 2
+                              },
+                              { "ID" : 3,
+                                "Order" : 0,
+                                "Title" : "Algo conforme",
+                                "Value" : 3
+                              },
+                              { "ID" : 4,
+                                "Order" : 0,
+                                "Title" : "Bastante conforme",
+                                "Value" : 4
+                              },
+                              { "ID" : 5,
+                                "Order" : 0,
+                                "Title" : "Muy conforme",
+                                "Value" : 5
+                              }
+                            ],
+                          "ColumnTitle" : "Opciones",
+                          "QuestionId" : 1
+                        } ],
+                    "ID" : 2,
+                    "Order" : 2,
+                    "Title" : "Calidad de sonido",
+                    "Value" : 0
+                  },
+                  { "GColumn" : [ { "ColumnOptions" : [ { "ID" : 1,
+                                "Order" : 0,
+                                "Title" : "Inconforme",
+                                "Value" : 1
+                              },
+                              { "ID" : 2,
+                                "Order" : 0,
+                                "Title" : "Algo inconforme",
+                                "Value" : 2
+                              },
+                              { "ID" : 3,
+                                "Order" : 0,
+                                "Title" : "Algo conforme",
+                                "Value" : 3
+                              },
+                              { "ID" : 4,
+                                "Order" : 0,
+                                "Title" : "Bastante conforme",
+                                "Value" : 4
+                              },
+                              { "ID" : 5,
+                                "Order" : 0,
+                                "Title" : "Muy conforme",
+                                "Value" : 5
+                              }
+                            ],
+                          "ColumnTitle" : "Opciones",
+                          "QuestionId" : 1
+                        } ],
+                    "ID" : 3,
+                    "Order" : 3,
+                    "Title" : "Nuevas encuestas",
+                    "Value" : 0
+                  },
+                  { "GColumn" : [ { "ColumnOptions" : [ { "ID" : 1,
+                                "Order" : 0,
+                                "Title" : "Inconforme",
+                                "Value" : 1
+                              },
+                              { "ID" : 2,
+                                "Order" : 0,
+                                "Title" : "Algo inconforme",
+                                "Value" : 2
+                              },
+                              { "ID" : 3,
+                                "Order" : 0,
+                                "Title" : "Algo conforme",
+                                "Value" : 3
+                              },
+                              { "ID" : 4,
+                                "Order" : 0,
+                                "Title" : "Bastante conforme",
+                                "Value" : 4
+                              },
+                              { "ID" : 5,
+                                "Order" : 0,
+                                "Title" : "Muy conforme",
+                                "Value" : 5
+                              }
+                            ],
+                          "ColumnTitle" : "Opciones",
+                          "QuestionId" : 1
+                        } ],
+                    "ID" : 4,
+                    "Order" : 4,
+                    "Title" : "Velocidad de carga",
+                    "Value" : 0
+                  },
+                  { "GColumn" : [ { "ColumnOptions" : [ { "ID" : 1,
+                                "Order" : 0,
+                                "Title" : "Inconforme",
+                                "Value" : 1
+                              },
+                              { "ID" : 2,
+                                "Order" : 0,
+                                "Title" : "Algo inconforme",
+                                "Value" : 2
+                              },
+                              { "ID" : 3,
+                                "Order" : 0,
+                                "Title" : "Algo conforme",
+                                "Value" : 3
+                              },
+                              { "ID" : 4,
+                                "Order" : 0,
+                                "Title" : "Bastante conforme",
+                                "Value" : 4
+                              },
+                              { "ID" : 5,
+                                "Order" : 0,
+                                "Title" : "Muy conforme",
+                                "Value" : 5
+                              }
+                            ],
+                          "ColumnTitle" : "Opciones",
+                          "QuestionId" : 1
+                        } ],
+                    "ID" : 5,
+                    "Order" : 5,
+                    "Title" : "Interfaz de usuario",
+                    "Value" : 0
+                  },
+                  { "GColumn" : [ { "ColumnOptions" : [ { "ID" : 1,
+                                "Order" : 0,
+                                "Title" : "Inconforme",
+                                "Value" : 1
+                              },
+                              { "ID" : 2,
+                                "Order" : 0,
+                                "Title" : "Algo inconforme",
+                                "Value" : 2
+                              },
+                              { "ID" : 3,
+                                "Order" : 0,
+                                "Title" : "Algo conforme",
+                                "Value" : 3
+                              },
+                              { "ID" : 4,
+                                "Order" : 0,
+                                "Title" : "Bastante conforme",
+                                "Value" : 4
+                              },
+                              { "ID" : 5,
+                                "Order" : 0,
+                                "Title" : "Muy conforme",
+                                "Value" : 5
+                              }
+                            ],
+                          "ColumnTitle" : "Opciones",
+                          "QuestionId" : 1
+                        } ],
+                    "ID" : 6,
+                    "Order" : 6,
+                    "Title" : "Disponibilidad de archivos",
+                    "Value" : 0
+                  },
+                  { "GColumn" : [ { "ColumnOptions" : [ { "ID" : 1,
+                                "Order" : 0,
+                                "Title" : "Inconforme",
+                                "Value" : 1
+                              },
+                              { "ID" : 2,
+                                "Order" : 0,
+                                "Title" : "Algo inconforme",
+                                "Value" : 2
+                              },
+                              { "ID" : 3,
+                                "Order" : 0,
+                                "Title" : "Algo conforme",
+                                "Value" : 3
+                              },
+                              { "ID" : 4,
+                                "Order" : 0,
+                                "Title" : "Bastante conforme",
+                                "Value" : 4
+                              },
+                              { "ID" : 5,
+                                "Order" : 0,
+                                "Title" : "Muy conforme",
+                                "Value" : 5
+                              }
+                            ],
+                          "ColumnTitle" : "Opciones",
+                          "QuestionId" : 1
+                        } ],
+                    "ID" : 7,
+                    "Order" : 7,
+                    "Title" : "Comentarios",
+                    "Value" : 0
+                  }
+                ],
+              "ID" : 1,
+              "IsRequired" : false,
+              "Order" : 1,
+              "QuestionType" : 1,
+              "SubTitle" : "",
+              "Title" : "En una escala de 1 a 5 (siendo 5 la mejor experiencia) ¿Está conforme con las siguientes características de la presentación?",
+              "Value" : 1,
+              "hasOther" : false
+            } ]
+      }
+    ],
+  "SurveyOrEva" : "S",
+  "ThanksMessage" : ""
+}
