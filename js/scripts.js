@@ -949,6 +949,16 @@ function seekYoutubeUpdate(){
 							cleanStage();
 							nextSlide();
 						}
+<<<<<<< HEAD
+=======
+					}else{
+						if(video.getPlayerState()==0){ //Finalizó el video
+							isPlaying = false;
+							wasPlayed = true;
+							clearInterval(updateYtbTime);
+							clearInterval(interval_onYoutube);
+						}
+>>>>>>> upstream/master
 					}
 				}
 			},1000);

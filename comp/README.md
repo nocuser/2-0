@@ -9,4 +9,12 @@
 - Reproducción de videos de youtube en:
 --Modo Individual
 --Modo Automático
+<<<<<<< HEAD
 --Skip & Skip Backwards con algunos Issues de reproducción aún.
+=======
+--Skip & Skip Backwards con algunos Issues de reproducción aún.
+
+26/AGOSTO/2014
+
+- Corrección con slides Youtube en modo individual / no permitía pasar correctamente al siguiente sin skip.
+>>>>>>> upstream/master
