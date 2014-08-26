@@ -10,3 +10,7 @@
 --Modo Individual
 --Modo Automático
 --Skip & Skip Backwards con algunos Issues de reproducción aún.
+
+26/AGOSTO/2014
+
+- Corrección con slides Youtube en modo individual / no permitía pasar correctamente al siguiente sin skip.
