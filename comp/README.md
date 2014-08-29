@@ -3,9 +3,9 @@
 
 22/AGOSTO/2014
 
-- Se creó el repositorio Master (Agustín)
-- Fork del repositorio Master (Anahí)
-- Lógica para Survey Mandatory agregada (Anahí)
+- Se creó el repositorio Master
+- Fork del repositorio Master
+- Lógica para Survey Mandatory agregada
 - Reproducción de videos de youtube en:
 --Modo Individual
 --Modo Automático
@@ -17,4 +17,12 @@
 26/AGOSTO/2014
 
 - Corrección con slides Youtube en modo individual / no permitía pasar correctamente al siguiente sin skip.
+<<<<<<< HEAD
+>>>>>>> upstream/master
+=======
+
+29/AGOSTO/2014
+
+- Debugging del comportamiento de almacenado de logs en el javascript del player.
+- Creado archivo javascript con la lógica del survey solamente.
 >>>>>>> upstream/master

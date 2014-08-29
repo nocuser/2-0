@@ -11,10 +11,12 @@ var	activeMedia,
 	isPlaying = false,
 	isPlayingType,
 	wasPlayed = false,
+	logBot,
 	mainStage,
 	noAudioDuration,
 	otherId = '',
 	presentation,
+	sequenceId,
 	setMainsOk,
 	SId,
 	sldId,
@@ -54,12 +56,14 @@ var sort_by = function(field, reverse, pr){
      } 
 }
 
-function _keepSession(){
+function _userkeep(){
 	$.ajax({
 		type: "POST",
-		url: "../../aws_getPresentation_keepSession.aspx"
+		url: "../../aws_userkeep.aspx"
 	}).done(function(){
+		console.log('userkeep excecuted succesfully');
 	}).fail(function(){
+		console.log('Fail to excecute userkeep');
 	})
 }
 
@@ -72,7 +76,7 @@ $(function(){
 	getPresentationMains(); 		//Buscar la cabecera de la presentación
 	getSlides(); 				//busca los slides
 	_setMains();				//Setea los datos iniciales
-	setInterval(_keepSession,20000);
+	setInterval(_userkeep,20000);
 	var nextVal = 0;
 	var inter = setInterval(function(){
 		nextVal = nextVal + 33.3; //En cada intervalo sumo 33.3 al valor numérico
@@ -312,74 +316,6 @@ function cleanStage(){
 	$(".imgSlide").css('z-index','');
 }
 
-//Función que busca las columnas para armar la pregunta Grading de una evaluación
-function columnSearch(i,j,k){
-	//Inicializo las variables necesarias, todas vacías
-	var htmlColumna = '';
-	var htmlColumaOpciones = '';
-	var htmlGrading = '';
-	var htmlOpcionesGrading = '';
-	//Por cada columna
-	for (var h = 0; h < sv.Section[i].Question[j].Answer[k].GColumn.length; h++) {
-		//Guardo el título de la columna y la cantidad de opciones que tiene
-		var tituloColumna = sv.Section[i].Question[j].Answer[k].GColumn[h].ColumnTitle;
-		var cantidadOpcionesColumna = sv.Section[i].Question[j].Answer[k].GColumn[h].ColumnOptions.length;
-		//Por cada item para esa columna
-		for (var n = 0; n < sv.Section[i].Question[j].Answer[k].GColumn[h].ColumnOptions.length; n++) {
-			//Me guardo el titulo de la opción
-			var columnOptionTitle = sv.Section[i].Question[j].Answer[k].GColumn[h].ColumnOptions[n].Title;
-			//Concateno los títulos de los items horizontales
-			htmlColumaOpciones += '<td class="tg-s6z2">'+columnOptionTitle+'</td>';
-		};
-		//Concateno las opciones verticales
-		htmlColumna += '<th class="tg-jjml columnBG" colspan="'+cantidadOpcionesColumna+'">'+tituloColumna+'</th>';
-	};
-	//Por cada respuesta
-	for (var f = 0; f < sv.Section[i].Question[j].Answer.length; f++) {
-		//Guardo los valores
-		var id = sv.Section[i].Question[j].Answer[f].ID;
-		var aValue = sv.Section[i].Question[j].Answer[f].Value;
-		var aTitle = sv.Section[i].Question[j].Answer[f].Title;
-		//Empiezo a armar cada fila con todos sus checkboxes
-		htmlOpcionesGrading += '<tr class="columnBG"><td class="tg-031e"><span data-answerid="'+id+'">'+aTitle+'</span></td>';
-		//Por cada columna
-		for (var h = 0; h < sv.Section[i].Question[j].Answer[f].GColumn.length; h++) {
-			//Por cada opción de la misma
-			for (var n = 0; n < sv.Section[i].Question[j].Answer[f].GColumn[h].ColumnOptions.length; n++) {
-				var htmlCheck = '';
-				var cValue = sv.Section[i].Question[j].Answer[f].GColumn[h].ColumnOptions[n].Value;
-				var cId = sv.Section[i].Question[j].Answer[f].GColumn[h].ColumnOptions[n].ID;
-				var caChecked = sv.Section[i].Question[j].Answer[f].GColumn[h].ColumnOptions[n].Checked;
-				if(caChecked){
-					htmlCheck = 'checked';
-				}else{
-					htmlCheck = '';
-				}
-				//Voy agregando cada checkbox a las opciones de las columnas
-				htmlOpcionesGrading += '<td class="tg-s6z2"><input data-evarespregitemcod="'+cId+'" '+htmlCheck+' type="radio" name="'+sv.Section[i].Question[j].ID+'-'+aTitle+'" title="'+aTitle+'" value="'+cValue+'" /></td>';
-			}
-		};
-		//Cierro toda la fila
-		htmlOpcionesGrading += '</tr>';
-	};
-	//Concateno todos los strings que armé antes para formar la tabla definitiva
-	htmlGrading = 	'<table class="tg">'+
-			'<tr>'+
-				'<th class="tg-031e" rowspan="2"></th>'+htmlColumna+
-			'</tr>'+
-			'<tr>'+htmlColumaOpciones+'</tr>'
-	htmlGrading += htmlOpcionesGrading;
-	//Cierro la tabla completa
-	htmlGrading += '</table>';
-	//Se la devuelvo a la función getSurvey()
-	return htmlGrading;
-}
-
-//Acción al submitir una evaluación
-function evaSubmit(){
-	saveSection();
-}
-
 // función que busca la cabecera de la presentación en la base de datos.
 function getPresentationMains(){
 	/*Consulta*/
@@ -481,105 +417,6 @@ function getSpeaker(speakerId){
 	}
 }
 
-//Función que busca el Survey / Evaluación en la base de datos.
-function getSurvey(SId){
-	/*Consulta*/
-	var url = '../../aws_getpresentation_surveyeva.aspx'
-	var request = new XMLHttpRequest();
-	request.open("POST", url, false);
-	request.setRequestHeader("str", str);
-	request.setRequestHeader("key", ek);
-	request.setRequestHeader("SId",SId);
-	request.send();
-	if (request.status == 200) {
-		/*Consulta exitosa*/
-		//Guardo en "sv" el array de datos en formato JSON
-		sv = $.parseJSON(request.responseText);
-		var html = '';
-		//ORDENO por el campo "Order" el JSON de la evaluación.
-		sv.Section.sort(sort_by('Order', true, parseInt));
-		//Por cada SECCIÓN
-		for (var i = 0; i < sv.Section.length; i++) {
-			var sId = sv.Section[i].ID;
-			var sectionNumber = i + 1;
-			html += '<ul class="sectionList" sectionnumber="'+sectionNumber+'" data-sectionId="'+sId+'">';
-			html += '<li>';
-			html += '<span class="sectionTitle">Page '+sv.Section[i].Order+'</span>';
-			//Por cada PREGUNTA
-			for (var j = 0; j < sv.Section[i].Question.length; j++) {
-				var questionType = sv.Section[i].Question[j].QuestionType;
-				var qId = sv.Section[i].Question[j].ID;
-				var hasOther = sv.Section[i].Question[j].hasOther;
-				var isRequired = sv.Section[i].Question[j].isRequired;
-				var isMultiSelect = sv.Section[i].Question[j].IsMultiSelect;
-				//Si es REQUIRED
-				if(isRequired){
-					html += '<span class="questionTitle isRequired" data-mselect="'+isMultiSelect+'" data-qtype="'+questionType+'" data-required="true" data-questionid="'+qId+'">'+sv.Section[i].Question[j].Title+'</span>';
-				}else{
-					html += '<span class="questionTitle" data-mselect="'+isMultiSelect+'" data-qtype="'+questionType+'" data-required="false" data-questionid="'+qId+'">'+sv.Section[i].Question[j].Title+'</span>';
-				}
-				html += '<div id="a-hold-'+sId+qId+'">';
-				gFlag = false;
-				//Por cada RESPUESTA
-				for (var k = 0; k < sv.Section[i].Question[j].Answer.length; k++) {
-					var aId = sv.Section[i].Question[j].Answer[k].ID;
-					var aValue = sv.Section[i].Question[j].Answer[k].Value;
-					var aText = sv.Section[i].Question[j].Answer[k].Title;
-					var aChecked = sv.Section[i].Question[j].Answer[k].Checked;
-					//Si aChecked == True, está respondida esta opción en la base de datos, la marco como tal
-					if(aChecked==true){
-						var htmlCheck = 'checked';
-					}else{
-						var htmlCheck = '';
-					}
-					//Si es Grading
-					if(questionType==1){
-						if(gFlag==false){
-							var htmlGrading = columnSearch(i,j,k);
-							html += htmlGrading;
-							gFlag = true;
-						}
-					}
-					//Si es multiple Choice
-					if(questionType==2){
-						if(isMultiSelect){
-							html += '<input data-answerid="'+aId+'" '+htmlCheck+' type="checkbox" value="'+aValue+'" name="checkbox-'+sId+qId+'" id="a-'+sId+qId+aId+'" onchange="_showHideOther('+sId+qId+')" /><label for="a-'+sId+qId+aId+'">'+aText+'</label><br>';
-						}else{
-							html += '<input data-answerid="'+aId+'" '+htmlCheck+' type="radio" value="'+aValue+'" name="radiobutton-'+sId+qId+'" id="a-'+sId+qId+aId+'" onchange="_showHideOther('+sId+qId+')" /><label for="a-'+sId+qId+aId+'">'+aText+'</label><br>';
-						}
-					}
-					//Si es Comment
-					if(questionType==4){
-						html += '<textarea data-answerid="'+aId+'" name="comment'+sId+qId+'" id="a-'+sId+qId+aId+'"></textarea>';
-					}
-				}
-				//Si tiene opción "other"
-				if(hasOther){
-					if(questionType==2){
-						html += '<input data-answerid="'+aId+'" '+htmlCheck+' type="radio" value="Other" name="radiobutton-'+sId+qId+'" id="a-'+sId+qId+'other" onchange="showHideOther('+sId+qId+')" /><label for="a-'+sId+qId+'other">Other</label><br>';
-						html += '<textarea name="txt'+sId+qId+'" id="txt'+sId+qId+'" style="display:none;"></textarea>';
-					}
-				}
-				html += '</div>';
-			};
-			html += '</li>';
-			html += '</ul>';
-		};
-		//Me guardo la cantidad de secciones para hacer el paginado.
-		var sLong = sv.Section.length;
-		html += '<button id="evaprevbtn" onclick="prevEvaSection('+sLong+')"><< Previous</button>';
-		html += '<button id="evanextbtn" onclick="nextEvaSection('+sLong+')">Next >></button>';
-		html += '<button id="evasubmit" onclick="evaSubmit('+sLong+')">Submit</button>';
-		$("#eva-stageMain").attr('data-sid',SId);
-		$("#eva-stageMain").html(html);
-		//Ejecuto función para configurar y armar las secciones.
-		setSections(sLong);
-	}else{
-		//El request de datos fallo
-		alert('Survey loading fail!');
-	}
-}
-
 //Función para recuperar las variables de la URL
 function getVars(){
 	var url= location.search.replace("?", "");
@@ -620,16 +457,7 @@ function loadingError(errorMessage){
 	alert('Error while loading the content: '+errorMessage);
 }
 
-//Función para avanzar a la siguiente sección de una evaluación / encuesta
-function nextEvaSection(sLong){
-	//Si está activa, guardo la section antes de avanzar a la siguiente página
-	saveSection();
-	//Cambio la sección activa
-	$('.selected').next().addClass('selected');
-	$('.selected').prev().removeClass('selected');
-	//Vuelvo a ejecutar setSections para que organize y muestre el nuevo contenido
-	setSections(sLong);
-}
+
 
 //Pasar al siguiente slide.
 function nextSlide(){
@@ -644,11 +472,17 @@ function nextSlide(){
 function playPause(){
 	//Si "noAudioDuration" es cero, quiere decir que hay contenido multimedia (audio o video) para reproducir
 	var volumen = document.getElementById('volumeControl');
+	var slideId = $('#slides li.active').attr('data-sldId');
 	//Si es video comun
 	if(isPlayingType=='video'){
 		video.volume = (volumen.value / 10);
 		//Si el video está pausado/detenido
 		if (video.paused){
+			if(isPlaying){
+				sendLog(slideId,'retake'); //Ejecuto AJAX que almacena los logs // Está retomando la reproducción.
+			}else{
+				sendLog(slideId,'startPlay'); //Ejecuto AJAX que almacena los logs // Esta iniciando la reproducción.
+			}
 			video.play(); //reproduzco
 			isPlaying = true;
 			$("#playPauseIcon").removeClass('fa-play').addClass("fa-pause"); //cambio el icono de play por el de pausa.
@@ -657,6 +491,8 @@ function playPause(){
 		} 
 		else{
 			//Si el video está reproduciendo
+			//Detengo la recolección de logs.
+			sendLog(slideId,'pause');
 			video.pause(); //Pauso el video.
 			$("#playPauseIcon").removeClass('fa-pause').addClass("fa-play"); //cambio el ícono de pausa a play neuvamente.
 			$("#fs_playPauseIcon").removeClass('fa-pause').addClass("fa-play"); //cambio el ícono de pausa a play neuvamente.
@@ -666,6 +502,13 @@ function playPause(){
 		video.setVolume(volumen.value);
 		var updateYtbTime;
 		if (video.getPlayerState() == 2 || video.getPlayerState() == -1 || video.getPlayerState() == 0){
+
+			if(video.getPlayerState() == -1){
+				sendLog(slideId,'startPlay'); //Ejecuto AJAX que almacena los logs // Esta iniciando la reproducción.
+			}else if(video.getPlayerState() == 2){
+				sendLog(slideId,'retake'); //Ejecuto AJAX que almacena los logs // Esta iniciando la reproducción.
+			}
+
 			video.playVideo(); //reproduzco
 			isPlaying = true;
 			$("#playPauseIcon").removeClass('fa-play').addClass("fa-pause"); //cambio el icono de play por el de pausa.
@@ -700,6 +543,7 @@ function playPause(){
 		} 
 		else{
 			//Si el video está reproduciendo
+			sendLog(slideId,'pause'); //Detengo el log.
 			video.pauseVideo(); //Pauso el video.
 			$("#playPauseIcon").removeClass('fa-pause').addClass("fa-play"); //cambio el ícono de pausa a play neuvamente.
 			$("#fs_playPauseIcon").removeClass('fa-pause').addClass("fa-play"); //cambio el ícono de pausa a play neuvamente.
@@ -708,14 +552,7 @@ function playPause(){
 	}
 }
 
-function prevEvaSection(sLong){
-	// if(_PresentationStatus=='A'){
-		saveSection();
-	// }
-	$('.selected').prev().addClass('selected');
-	$('.selected').next().removeClass('selected');
-	setSections(sLong);
-}
+
 //Función para reproducir el slide anterior.
 function previousSlide(){
 	var slideSiguiente = $("#slides").find("li.active").prev(); //busco el slide previo al activo.
@@ -734,125 +571,6 @@ function resetTimer(){
 	fs_sliderDuration.value = 0;
 	/*Reseteo el boton de play para que muestre si o si Play*/
 	$("#playPauseIcon").removeClass('fa-pause').addClass("fa-play");
-}
-
-function saveSection(){
-	var answerArray = '[';
-	var surveyid = $("#eva-stageMain").attr('data-sid');
-	$(".selected").find(".questionTitle").each(function(){
-		var sId = $(".selected").attr('data-sectionId');
-		var elemento = this;
-		var qId = elemento.dataset.questionid;
-		var isMS = 'false';
-		var suma = 0;
-		if(elemento.dataset.qtype==1){
-			$("table.tg tbody tr.columnBG td.tg-031e").siblings().each(function(){
-				var aId = $(this).parents('tr').children('.tg-031e').children('span').attr('data-answerid');
-				$(this).find(':input').each(function(){
-					if(this.checked){
-						suma = suma + 1
-						answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
-						answerArray += '"SvEvaCod" : "'+ surveyid+'",';
-						answerArray += '"SvEvaPregCod" : "'+ qId+'",';
-						answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
-						answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
-						answerArray += '"SvTipSccCod" : "'+ sId+'",';
-						answerArray += '"SvEvaResCod" : "'+suma+'",'; //Aumentar
-						answerArray += '"SvEvaResPregItemCod" : "'+this.dataset.evarespregitemcod+'",';
-						answerArray += '"SvEvaPregItemCod" : "'+aId+'",';
-						answerArray += '"SvEvaResLevelCod" : "1",';
-						answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
-						answerArray += '"SvEvaResComment" : "",';
-						answerArray += '"SvCategCod" : "0"},';
-					}
-				})
-			})
-		}
-		if(elemento.dataset.qtype==2){
-			isMS = elemento.dataset.mselect;
-			if(isMS=='true'){
-				$("#a-hold-"+sId+qId).find(':input').each(function(){
-					var respuesta = this;
-					if(respuesta.checked){
-						suma = suma + 1
-						answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
-						answerArray += '"SvEvaCod" : "'+ surveyid+'",';
-						answerArray += '"SvEvaPregCod" : "'+ qId+'",';
-						answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
-						answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
-						answerArray += '"SvTipSccCod" : "'+ sId+'",';
-						answerArray += '"SvEvaResCod" : "1",';
-						answerArray += '"SvEvaResPregItemCod" : "'+ respuesta.dataset.answerid+'",';
-						answerArray += '"SvEvaPregItemCod" : "1",';
-						answerArray += '"SvEvaResLevelCod" : "'+suma+'",'; //Aumentar
-						answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
-						answerArray += '"SvEvaResComment" : "",';
-						answerArray += '"SvCategCod" : "0"},';
-					}
-				});
-				isMS = 'false';
-			}else{
-				$("#a-hold-"+sId+qId).find(':input').each(function(){
-					var respuesta = this;
-					if(respuesta.checked){
-						answerArray += '{ "SvEvaCodOrg" : "'+surveyid+'",';
-						answerArray += '"SvEvaCod" : "'+surveyid+'",';
-						answerArray += '"SvEvaPregCod" : "'+qId+'",';
-						answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
-						answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
-						answerArray += '"SvTipSccCod" : "'+sId+'",';
-						answerArray += '"SvEvaResCod" : "1",';
-						answerArray += '"SvEvaResPregItemCod" : "'+respuesta.dataset.answerid+'",';
-						answerArray += '"SvEvaPregItemCod" : "1",';
-						answerArray += '"SvEvaResLevelCod" : "1",';
-						answerArray += '"SvUserIdRes" : "'+_PresentationUserId+'",';
-						answerArray += '"SvEvaResComment" : "",';
-						answerArray += '"SvCategCod" : "0"},';
-					}
-				});
-				isMS = 'false';
-			}
-		}
-		if(elemento.dataset.qtype==4){
-			$("#a-hold-"+sId+qId).find('textarea').each(function(){
-				var respuesta = this;
-				answerArray += '{ "SvEvaCodOrg" : "'+surveyid+'",';
-				answerArray += '"SvEvaCod" : "'+surveyid+'",';
-				answerArray += '"SvEvaPregCod" : "'+qId+'",';
-				answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
-				answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
-				answerArray += '"SvTipSccCod" : "'+sId+'",';
-				answerArray += '"SvEvaResCod" : "1",';
-				answerArray += '"SvEvaResPregItemCod" : "'+respuesta.dataset.answerid+'",';
-				answerArray += '"SvEvaPregItemCod" : "1",';
-				answerArray += '"SvEvaResLevelCod" : "1",';
-				answerArray += '"SvUserIdRes" : "'+_PresentationUserId+'",';
-				answerArray += '"SvEvaResComment" : "'+respuesta.value+'",';
-				answerArray += '"SvCategCod" : "0"},';
-			});
-		}
-	})
-	var arrayCompleto = answerArray.substring(0, answerArray.length - 1);
-	arrayCompleto += ']';
-	$.ajax({
-		type: "POST",
-		headers: {
-		  "key": ek,
-		  "str": str
-		},
-		data: arrayCompleto,
-		url: "../../aws_getpresentation_savesurvey.aspx",
-		timeout: 10000
-	}).done(function(){
-		/*
-
-		PASAR AL SIGUIENTE SLIDE
-
-		*/
-	}).fail(function(){
-		alert("There was a communication problem, please try again.");
-	});
-
 }
 
 //funcion que actualiza el tiempo de reproducción del video / audio
@@ -910,6 +628,7 @@ function seekTimeUpdate(){
 }
 
 function seekYoutubeUpdate(){
+	var slideId = $('#slides li.active').attr('data-sldId');
 	var updateYtbTime;
 	if (video.getPlayerState() == 1){ //Si está reproduciendose
 		isPlaying = true;
@@ -971,52 +690,7 @@ function seekYoutubeUpdate(){
 	}
 }
 
-//funcion que setea las secciones
-function setSections(sLong){
-	//Busco cual es la seccion activa
-	var sActive = $('.selected');
-	//Pregunto si la activa es < > 0 o es igual. Si es igual, quiere decir que aún no se seleccionó ninguna sección. O sea, es la primera vez que imprimo
-	//El survey o Evaluación.
-	if(sActive.length==0){
-		//Es cero, por lo tanto busco la primera sección para mostrar.
-		$(".eva-stageMain ul:first-child").addClass("selected");
-		//Si el rango de secciones es solamente 1, no tengo que mostrar boton next
-		if(sLong==1){
-			$("#evaprevbtn").css('display','none');
-			$("#evasubmit").css('display','inline-block');
-			$("#evanextbtn").css('display','none');
-		}else{
-			//Si hay más de 1 sección, como estoy mostrando la primera de todas, muestro el next y no el previous o submit.
-			$("#evaprevbtn").css('display','none');
-			$("#evasubmit").css('display','none');
-			$("#evanextbtn").css('display','inline-block');
-		}
-	}else{
-		//Es distinto de cero, por lo tanto, tengo varias secciones para mostrar. 
-		//Busco la que tengo seleccionada.
-		var selection = $(".selected").attr("sectionnumber");
-		//Si es 1, estoy en la primera sección
-		if(selection==1){
-			$("#evaprevbtn").css('display','none');
-			$("#evasubmit").css('display','none');
-			$("#evanextbtn").css('display','inline-block');
-		}else{
-			//Si estoy aca, NO estoy en la primera seccion, pregunto si estoy en la última
-			if(selection==sLong){
-				//Estoy en la última sección, tengo que mostrar el previous y el submit.
-				$("#evaprevbtn").css('display','inline-block');
-				$("#evanextbtn").css('display','none');
-				$("#evasubmit").css('display','inline-block');
-			}else{
-				//No es la última ni la primera sección, es una intermedia.
-				//Muestro next y previous.
-				$("#evaprevbtn").css('display','inline-block');
-				$("#evanextbtn").css('display','inline-block');
-				$("#evasubmit").css('display','none');
-			}
-		}
-	}
-}
+
 
 //Función para mostrar la opción "Other" de la respuesta.
 function showHideOther(id){
@@ -1099,6 +773,58 @@ function quitFullScreen(){
 	$(".imgSlide").css('z-index','');
 }
 
+function sendLog(id,state){
+	console.log('Inicio el log con state = '+state);
+
+	if(state=='pause'){
+		clearInterval(logBot);
+		console.log('Detuve la ejecución de los logs');
+	}else if(state=='startPlay'){
+		$.ajax({
+			url: '../../aws_getpresentation_lastsequence.aspx',
+			type: 'POST',
+			headers:{'str':str,'key':ek,'slideId':id}
+		})
+		.done(function(lastSeq) {
+			console.log('Se obtuvo la secuencia: '+lastSeq);
+			sequenceId = lastSeq;
+			logBot = setInterval(function(){
+				if(isPlayingType=='video'){
+					console.log('Tengo que guardar un log de video. Current = ' + video.currentTime);
+				}else if(isPlayingType=='ytb'){
+					console.log('Tengo que guardar un log de youtube. Current = ' + video.getCurrentTime());
+				}else if(isPlayingType=='quiz_sv'){
+					console.log('Tengo que guardar un log de quiz.');
+				}
+			},5000 /*Ejecuta cada 5 segundos*/);
+		})
+		.fail(function() {
+			console.log("error: no se pudo obtener la secuencia");
+		})
+		.always(function() {
+			console.log("completada la operación");
+		});
+	}else if(state=='retake'){
+		console.log('Tengo que hacer un retake de los logs, con secuencia '+sequenceId);
+		logBot = setInterval(function(){
+			if(isPlayingType=='video'){
+				console.log('Tengo que guardar un log de video. Current = ' + video.currentTime);
+			}else if(isPlayingType=='ytb'){
+				console.log('Tengo que guardar un log de youtube. Current = ' + video.getCurrentTime());
+			}else if(isPlayingType=='quiz_sv'){
+				console.log('Tengo que guardar un log de quiz.');
+			}
+		},5000 /*Ejecuta cada 5 segundos*/);
+	}
+	
+}
+
+//VideoSeek actualmente no se utiliza, pero es una función para seleccionar en la progress bar a que momento del video/audio se quiere ir.
+function videoSeek(){
+	var seekto = video.duration * (sliderDuration.value / 1000);
+	video.currentTime = seekto;
+}
+
 //Función para detectar si se presiona ESC. Esta tecla sirve para salir de FullScreen, en cuyo caso hay que ocultar los controles FullScreen
 //y mostrar nuevamente los controles estándares del reproductor.
 $(document).keyup(function(event){
@@ -1112,12 +838,6 @@ $(document).keyup(function(event){
 		}
 	}
 });
-
-//VideoSeek actualmente no se utiliza, pero es una función para seleccionar en la progress bar a que momento del video/audio se quiere ir.
-function videoSeek(){
-	var seekto = video.duration * (sliderDuration.value / 1000);
-	video.currentTime = seekto;
-}
 
 /*---------------------------------------
 METODOS JQUERY
@@ -1216,8 +936,10 @@ $.fn.startSlide = function startSlide(){
 }
 
 function onYouTubePlayerReady(){
+	var slideId = $('#slides li.active').attr('data-sldId');
 	video = document.getElementById('ytVideo');
 	video.setVolume(volumeControl.value);
+	video.addEventListener('onStateChange',youtubeStateChange);
 	interval_onYoutube = setInterval(function(){
 		if(video.getPlayerState()!=1){
 			//Si el video NO está reproduciendo
@@ -1229,4 +951,24 @@ function onYouTubePlayerReady(){
 			seekYoutubeUpdate();
 		}
 	})
+}
+
+function youtubeStateChange(){
+	var st = video.getPlayerState();
+
+	switch(st){
+		case -1:
+			console.log('Player State: '+st);
+			break;
+		case 0:
+			console.log('Player State: '+st);
+			break;
+		case 1:
+			console.log('Player State: '+st);
+			break;
+		case 2:
+			console.log('Player State: '+st);
+			break;
+
+	}
 }
