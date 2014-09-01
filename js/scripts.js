@@ -106,6 +106,10 @@ $(function(){
 
 	/*Funciones jQuery*/
 
+	$("#goback").on('click',function(){
+		window.history.back();
+	})
+
 	//Disparo el evento "StartSlide" en el click de un slide en la lista.
 	$('.listItem').click(function(){
 		var slideNow = $('.active').attr('data-order');
@@ -611,17 +615,26 @@ function seekTimeUpdate(){
 			video.pause();
 			//Vuelvo el tiempo a cero
 			video.currentTime = 0;
+			//Se dejó de reproducir
+			isPlaying = false;
+			//Fue reproducido
+			wasPlayed = true;
+			//console.log('Terminó el slide! Envío log 0');
+			var slideId = $('#slides li.active').attr('data-sldId');
+			savePresentationLog(slideId,sequenceId,0);
 			//Paso al siguiente slide
 			nextSlide();
 		}
 	}
-	var r = video.buffered.end(0);
-	var total = video.duration;
-	var nuevo = (r/total)*100;
-	/*BUFFER ACA*/
+
 	if(video.currentTime==video.duration){
 		isPlaying = false;
 		wasPlayed = true;
+		//Corto la transmisión de logs en caso de haberla.
+		clearInterval(logBot);
+		//console.log('Terminó el slide! Envío log 0');
+		var slideId = $('#slides li.active').attr('data-sldId');
+		savePresentationLog(slideId,sequenceId,0);
 		$("#playPauseIcon").removeClass('fa-pause').addClass("fa-play"); //cambio el ícono de pausa a play neuvamente.
 		$("#fs_playPauseIcon").removeClass('fa-pause').addClass("fa-play"); //cambio el ícono de pausa a play neuvamente.
 	}
@@ -770,12 +783,27 @@ function quitFullScreen(){
 	$(".imgSlide").css('z-index','');
 }
 
-function sendLog(id,state){
-	console.log('Inicio el log con state = '+state);
+function savePresentationLog(a,b,c){
+	$.ajax({
+		type: 'POST',
+		url: '../../aws_getpresentation_sendlog.aspx',
+		headers: {
+			'str'		:str,
+			'key'		:ek,
+			'slideId'	:a,
+			'seqId'		:b,
+			'position'	:c
+		}
+	}).done(function(){
+		return false;
+	})
+}
 
+function sendLog(id,state){
+	// console.log('Inicio el log con state = '+state);
 	if(state=='pause'){
 		clearInterval(logBot);
-		console.log('Detuve la ejecución de los logs');
+		// console.log('Detuve la ejecución de los logs');
 	}else if(state=='startPlay'){
 		$.ajax({
 			url: '../../aws_getpresentation_lastsequence.aspx',
@@ -783,11 +811,16 @@ function sendLog(id,state){
 			headers:{'str':str,'key':ek,'slideId':id}
 		})
 		.done(function(lastSeq) {
-			console.log('Se obtuvo la secuencia: '+lastSeq);
+			// console.log('Se obtuvo la secuencia: '+lastSeq);
 			sequenceId = lastSeq;
+			savePresentationLog(id,sequenceId,1);
 			logBot = setInterval(function(){
 				if(isPlayingType=='video'){
-					console.log('Tengo que guardar un log de video. Current = ' + video.currentTime);
+
+					var slidePosition = Math.floor(video.currentTime);
+					savePresentationLog(id,sequenceId,slidePosition);
+
+					//console.log('Tengo que guardar un log de video. Current = ' + Math.floor(video.currentTime));
 				}else if(isPlayingType=='ytb'){
 					console.log('Tengo que guardar un log de youtube. Current = ' + video.getCurrentTime());
 				}else if(isPlayingType=='quiz_sv'){
@@ -797,15 +830,13 @@ function sendLog(id,state){
 		})
 		.fail(function() {
 			console.log("error: no se pudo obtener la secuencia");
-		})
-		.always(function() {
-			console.log("completada la operación");
 		});
 	}else if(state=='retake'){
-		console.log('Tengo que hacer un retake de los logs, con secuencia '+sequenceId);
+		// console.log('Tengo que hacer un retake de los logs, con secuencia '+sequenceId);
 		logBot = setInterval(function(){
 			if(isPlayingType=='video'){
-				console.log('Tengo que guardar un log de video. Current = ' + video.currentTime);
+				var slidePosition = Math.floor(video.currentTime);
+				savePresentationLog(id,sequenceId,slidePosition);
 			}else if(isPlayingType=='ytb'){
 				console.log('Tengo que guardar un log de youtube. Current = ' + video.getCurrentTime());
 			}else if(isPlayingType=='quiz_sv'){
@@ -844,6 +875,9 @@ METODOS JQUERY
 $.fn.startSlide = function startSlide(){
 	//Cierro los intervalos en caso de que se haya estado reproduciendo una imagen sin sonido.
 	clearInterval(interval);
+	//Corto la transmisión de logs en caso de haberla.
+	clearInterval(logBot);
+	isPlaying = false;
 	//limpio el stage.
 	cleanStage();
 	//Reseteo los relojes.

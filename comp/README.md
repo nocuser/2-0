@@ -19,3 +19,8 @@
 
 - Debugging del comportamiento de almacenado de logs en el javascript del player.
 - Creado archivo javascript con la lógica del survey solamente.
+
+01/SEPTIEMBRE/2014
+
+- Boton "Go Back" funcionando
+- Agregados logs en la reproducción de videos propios. (Youtube Aún con error)
