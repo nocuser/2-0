@@ -134,6 +134,7 @@ function getSurvey(SId){
 	request.send();
 	if (request.status == 200) {
 		/*Consulta exitosa*/
+		console.log(request.responseText);
 		//Guardo en "sv" el array de datos en formato JSON
 		sv = $.parseJSON(request.responseText);
 		var html = '';
@@ -159,7 +160,7 @@ function getSurvey(SId){
 				}else{
 					html += '<span class="questionTitle" data-mselect="'+isMultiSelect+'" data-qtype="'+questionType+'" data-required="false" data-questionid="'+qId+'">'+sv.Section[i].Question[j].Title+'</span>';
 				}
-				html += '<div id="a-hold-'+sId+qId+'">';
+				html += '<div id="a-hold-'+sId+qId+'" class="answerHolder">';
 				gFlag = false;
 				//Por cada RESPUESTA
 				for (var k = 0; k < sv.Section[i].Question[j].Answer.length; k++) {
@@ -173,39 +174,190 @@ function getSurvey(SId){
 					}else{
 						var htmlCheck = '';
 					}
-					//Si es Grading
-					if(questionType==1){
-						if(gFlag==false){
-							var htmlGrading = columnSearch(i,j,k);
-							html += htmlGrading;
-							gFlag = true;
+					switch(questionType) {
+	    				case 1: //Si es Grading
+							if(gFlag==false){
+								var htmlGrading = columnSearch(i,j,k);
+								html += htmlGrading;
+								gFlag = true;
+							}
+							break;
+						case 2: //Si es multiple Choice
+							if(isMultiSelect){
+								html += '<input data-answerid="'+aId+'" '+htmlCheck+' type="checkbox" value="'+aValue+'" name="checkbox-'+sId+qId+'" id="a-'+sId+qId+aId+'" onchange="_showHideOther('+sId+qId+')" /><label for="a-'+sId+qId+aId+'">'+aText+'</label><br>';
+							}else{
+								html += '<input data-answerid="'+aId+'" '+htmlCheck+' type="radio" value="'+aValue+'" name="radiobutton-'+sId+qId+'" id="a-'+sId+qId+aId+'" onchange="_showHideOther('+sId+qId+')" /><label for="a-'+sId+qId+aId+'">'+aText+'</label><br>';
+							}
+							break;
+						case 4: //Si es Comment
+							html += '<textarea data-answerid="'+aId+'" name="comment'+sId+qId+'" id="a-'+sId+qId+aId+'"></textarea>';
+							break;
+						case 6: //Si es LikerScale
+							//Liker Scale
+	                        var minValue = sv.Section[i].Question[j].SvPregInitialValue;
+	                        var maxValue = sv.Section[i].Question[j].SvPregFinalValue;
+	                        var interval = sv.Section[i].Question[j].SvPregStepValue;
+	                        var text1 = sv.Section[i].Question[j].SvPregInitialText;
+	                        var text2 = sv.Section[i].Question[j].SvPregMediaText;
+	                        var text3 = sv.Section[i].Question[j].SvPregFinalText;
+	                        var valresp = sv.Section[i].Question[j].Answer[k].Title;
+	                        html +='<div class="likerscaleContainer">'+
+	                                    '<span>'+text1+'</span>'+
+	                                    '<ul class="rangeSelector">';
+	                                
+	                        for (n=minValue; n <= maxValue; n += interval){
+	                            if (valresp!=='' && valresp == n)
+	                            {
+	                                html +='<li class="likerScaleOption liker-active" onclick="clickScaleOption('+qId+','+n+');" id="li-' + qId + '-'+n+'">'+n+' <input class="liker-check" type="checkbox" hidden value="'+n+'" checked> </li>';
+	                            }
+	                            else
+	                            {
+	                                html +='<li class="likerScaleOption" onclick="clickScaleOption('+qId+','+n+');" id="li-' + qId + '-'+n+'">'+n+' <input class="liker-check" type="checkbox" hidden value="'+n+'" > </li>';
+	                            }
+	                        }
+	                        html += '</ul><span>'+text3+'</span></div>';
+	                        break;
+						case 7: //Si es Slider
+							var minValue = sv.Section[i].Question[j].SvPregInitialValue;
+	                        var maxValue = sv.Section[i].Question[j].SvPregFinalValue;
+	                        var interval = sv.Section[i].Question[j].SvPregStepValue;
+							var valresp = sv.Section[i].Question[j].Answer[k].Title;
+							minValue -= 1;
+	                        if (valresp == '') {
+	                            //Si el slider tiene valor, lo posiciono en el numero que indica el valor
+	                            html += '<div class="sliderVerticalContainer"><input type="range" orient="vertical" class="eva-range vertical" id="a-'+sId+qId+aId+'" min="'+minValue+'" max="'+maxValue+'" value="-1" /></div>';
+	                        } else {
+	                            html += '<div class="sliderVerticalContainer"><input type="range" orient="vertical" class="eva-range vertical"  id="a-'+sId+qId+aId+'" min="'+minValue+'" max="'+maxValue+'" value="'+valresp+'"  /></div>';
+	                        }
+							break;
+						case 8: //Si es date
+							var valresp = sv.Section[i].Question[j].Answer[k].Title;
+							var format = sv.Section[i].Question[j].SvPregFormatDate;
+							 //Busco el valor respondido (si lo hay) y reemplazo lo vacio con ceros
+	                        if (valresp != '') {
+	                            var arrayDate = valresp.split('/');
+	                            
+	                            if (arrayDate[0]) {} else {
+	                                arrayDate[0] = '00';
+	                            }
+	                            if (arrayDate[1]) {} else {
+	                                arrayDate[1] = '00';
+	                            }
+	                            if (arrayDate[2] == '0000') {
+	                                arrayDate[2] = '';
+	                            }
+	                        } else {
+	                            var arrayDate = [
+	                                "00",
+	                                "00",
+	                                ""
+	                            ];
+	                        }
+	                        //Escribo la respuesta
+	                        var htmlMonth = '<select  data-selecttype="month" id="comboMonth-'+sId+qId+aId+'" class="comboboxMonth" value="' + arrayDate[1] + '">';
+	                        //Genero las opciones para el combobox
+	                        for (var m = 0; m < 13; m++) {
+	                            var mesSeleccion = arrayDate[1];
+	                            if (m < 10) {
+	                                var n = '0' + m;
+	                            } else {
+	                                var n = m;
+	                            }
+	                            if (n == mesSeleccion) {
+	                                var selected = 'selected';
+	                            } else {
+	                                var selected = '';
+	                            }
+	                            switch (m) {
+	                                case 0:
+	                                    htmlMonth += '<option ' + selected + ' value="00">Select Month</option>';
+	                                    break;
+	                                case 1:
+	                                    htmlMonth += '<option ' + selected + ' value="01">January</option>';
+	                                    break;
+	                                case 2:
+	                                    htmlMonth += '<option ' + selected + ' value="02">February</option>';
+	                                    break;
+	                                case 3:
+	                                    htmlMonth += '<option ' + selected + ' value="03">March</option>';
+	                                    break;
+	                                case 4:
+	                                    htmlMonth += '<option ' + selected + ' value="04">April</option>';
+	                                    break;
+	                                case 5:
+	                                    htmlMonth += '<option ' + selected + ' value="05">May</option>';
+	                                    break;
+	                                case 6:
+	                                    htmlMonth += '<option ' + selected + ' value="06">June</option>';
+	                                    break;
+	                                case 7:
+	                                    htmlMonth += '<option ' + selected + ' value="07">July</option>';
+	                                    break;
+	                                case 8:
+	                                    htmlMonth += '<option ' + selected + ' value="08">August</option>';
+	                                    break;
+	                                case 9:
+	                                    htmlMonth += '<option ' + selected + ' value="09">September</option>';
+	                                    break;
+	                                case 10:
+	                                    htmlMonth += '<option ' + selected + ' value="10">October</option>';
+	                                    break;
+	                                case 11:
+	                                    htmlMonth += '<option ' + selected + ' value="11">November</option>';
+	                                    break;
+	                                case 12:
+	                                    htmlMonth += '<option ' + selected + ' value="12">December</option></select>';
+	                                    break;
+	                            }
+	                        }
+	                        var htmlDay = '<select data-selecttype="day" id="comboDay-' +sId+qId+aId+'" class="comboboxDay" value="' + arrayDate[0] + '">';
+	                        htmlDay += '<option selected value="00">Select Day</option>';
+	                        //Genero las opciones para el combobox
+	                        for (var c = 1; c < 32; c++) {
+	                            if (c < 10) {
+	                                var value = '0' + c;
+	                                if (arrayDate[0] == value) {
+	                                    htmlDay += '<option selected value="0' + c + '" >0' + c + '</option>';
+	                                } else {
+	                                    htmlDay += '<option value="0' + c + '" >0' + c + '</option>';
+	                                }
+	                            } else {
+	                                var value = c;
+	                                if (arrayDate[0] == value) {
+	                                    htmlDay += '<option selected value="' + c + '" >' + c + '</option>';
+	                                } else {
+	                                    htmlDay += '<option value="' + c + '" >' + c + '</option>';
+	                                }
+	                            }
+	                        }
+	                        htmlDay += '</select>';
+	                        var htmlYear = '<input pattern="[0-9]" type="text" onkeypress="return justNumbers(event);" id="comboYear-' +sId+qId+aId+'" class="comboboxYear" value="' + arrayDate[2] + '" />';
+	                        if (format=='DD/MM/YYYY') {
+	                        	html+=htmlDay+htmlMonth+htmlYear;
+	                        }else{
+	                        	html+=htmlMonth+htmlDay+htmlYear;
+	                        }
+							break;
+						case 9: //Free Numeric Form
+	                   		var valresp = sv.Section[i].Question[j].Answer[k].Title;
+	                        html += '<input class="freenumericform" type="number" pattern="[0-9]+([\.|,][0-9]+)?" value="' + valresp + '" />';
+							break;
+					}
+				
+					//Si tiene opción "other"
+					if(hasOther){
+						if(questionType==2){
+							html += '<input data-answerid="'+aId+'" '+htmlCheck+' type="radio" value="Other" name="radiobutton-'+sId+qId+'" id="a-'+sId+qId+'other" onchange="showHideOther('+sId+qId+')" /><label for="a-'+sId+qId+'other">Other</label><br>';
+							html += '<textarea name="txt'+sId+qId+'" id="txt'+sId+qId+'" style="display:none;"></textarea>';
 						}
 					}
-					//Si es multiple Choice
-					if(questionType==2){
-						if(isMultiSelect){
-							html += '<input data-answerid="'+aId+'" '+htmlCheck+' type="checkbox" value="'+aValue+'" name="checkbox-'+sId+qId+'" id="a-'+sId+qId+aId+'" onchange="_showHideOther('+sId+qId+')" /><label for="a-'+sId+qId+aId+'">'+aText+'</label><br>';
-						}else{
-							html += '<input data-answerid="'+aId+'" '+htmlCheck+' type="radio" value="'+aValue+'" name="radiobutton-'+sId+qId+'" id="a-'+sId+qId+aId+'" onchange="_showHideOther('+sId+qId+')" /><label for="a-'+sId+qId+aId+'">'+aText+'</label><br>';
-						}
-					}
-					//Si es Comment
-					if(questionType==4){
-						html += '<textarea data-answerid="'+aId+'" name="comment'+sId+qId+'" id="a-'+sId+qId+aId+'"></textarea>';
-					}
-				}
-				//Si tiene opción "other"
-				if(hasOther){
-					if(questionType==2){
-						html += '<input data-answerid="'+aId+'" '+htmlCheck+' type="radio" value="Other" name="radiobutton-'+sId+qId+'" id="a-'+sId+qId+'other" onchange="showHideOther('+sId+qId+')" /><label for="a-'+sId+qId+'other">Other</label><br>';
-						html += '<textarea name="txt'+sId+qId+'" id="txt'+sId+qId+'" style="display:none;"></textarea>';
-					}
+					
 				}
 				html += '</div>';
-			};
+			}
 			html += '</li>';
 			html += '</ul>';
-		};
+		}
 		//Me guardo la cantidad de secciones para hacer el paginado.
 		var sLong = sv.Section.length;
 		html += '<button id="evaprevbtn" onclick="prevEvaSection('+sLong+')"><< Previous</button>';
@@ -245,12 +397,14 @@ function saveSection(){
 	var answerArray = '[';
 	var surveyid = $("#eva-stageMain").attr('data-sid');
 	$(".selected").find(".questionTitle").each(function(){
+
 		var sId = $(".selected").attr('data-sectionId');
 		var elemento = this;
 		var qId = elemento.dataset.questionid;
 		var isMS = 'false';
 		var suma = 0;
-		if(elemento.dataset.qtype==1){
+		console.log("pregunta " + qId + " tipo " + elemento.dataset.qtype);
+		if(elemento.dataset.qtype==1){ //Grading
 			$("table.tg tbody tr.columnBG td.tg-031e").siblings().each(function(){
 				var aId = $(this).parents('tr').children('.tg-031e').children('span').attr('data-answerid');
 				$(this).find(':input').each(function(){
@@ -273,7 +427,7 @@ function saveSection(){
 				})
 			})
 		}
-		if(elemento.dataset.qtype==2){
+		if(elemento.dataset.qtype==2){ //MultiPleChoice
 			isMS = elemento.dataset.mselect;
 			if(isMS=='true'){
 				$("#a-hold-"+sId+qId).find(':input').each(function(){
@@ -318,7 +472,7 @@ function saveSection(){
 				isMS = 'false';
 			}
 		}
-		if(elemento.dataset.qtype==4){
+		if(elemento.dataset.qtype==4){ //Comment
 			$("#a-hold-"+sId+qId).find('textarea').each(function(){
 				var respuesta = this;
 				answerArray += '{ "SvEvaCodOrg" : "'+surveyid+'",';
@@ -336,9 +490,82 @@ function saveSection(){
 				answerArray += '"SvCategCod" : "0"},';
 			});
 		}
+		if(elemento.dataset.qtype==6){ //LikerScale
+			$("#a-hold-"+sId+qId).find(':input').each(function(){
+				if(this.checked){
+					var cheq = this.value;
+					answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
+					answerArray += '"SvEvaCod" : "'+ surveyid+'",';
+					answerArray += '"SvEvaPregCod" : "'+ qId+'",';
+					answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
+					answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
+					answerArray += '"SvTipSccCod" : "'+ sId+'",';
+					answerArray += '"SvEvaResCod" : "1",'; //Aumentar
+					answerArray += '"SvEvaResPregItemCod" : "'+cheq+'",';
+					answerArray += '"SvEvaPregItemCod" : "1",';  
+					answerArray += '"SvEvaResLevelCod" : "1",';
+					answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
+					answerArray += '"SvEvaResComment" : "",';
+					answerArray += '"SvCategCod" : "0"},';
+				}
+			});
+		}
+		if(elemento.dataset.qtype==7){ //Slider
+				answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
+				answerArray += '"SvEvaCod" : "'+ surveyid+'",';
+				answerArray += '"SvEvaPregCod" : "'+ qId+'",';
+				answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
+				answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
+				answerArray += '"SvTipSccCod" : "'+ sId+'",';
+				answerArray += '"SvEvaResCod" : "1",'; //Aumentar
+				answerArray += '"SvEvaResPregItemCod" : "'+$("#a-"+sId+qId+'1').val()+'",';
+				answerArray += '"SvEvaPregItemCod" : "1",';  
+				answerArray += '"SvEvaResLevelCod" : "1",';
+				answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
+				answerArray += '"SvEvaResComment" : "",';
+				answerArray += '"SvCategCod" : "0"},';
+		}
+		if(elemento.dataset.qtype==8){ //Date
+			var strDate = '';
+			
+			strDate = $("#comboDay-"+sId+qId+'1').val() +"/" + $("#comboMonth-"+sId+qId+'1').val()+"/"+$("#comboYear-"+sId+qId+'1').val();
+			
+			answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
+			answerArray += '"SvEvaCod" : "'+ surveyid+'",';
+			answerArray += '"SvEvaPregCod" : "'+ qId+'",';
+			answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
+			answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
+			answerArray += '"SvTipSccCod" : "'+ sId+'",';
+			answerArray += '"SvEvaResCod" : "1",'; //Aumentar
+			answerArray += '"SvEvaResPregItemCod" : "'+strDate+'",';
+			answerArray += '"SvEvaPregItemCod" : "1",';  
+			answerArray += '"SvEvaResLevelCod" : "1",';
+			answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
+			answerArray += '"SvEvaResComment" : "",';
+			answerArray += '"SvCategCod" : "0"},';
+		}
+
+		if(elemento.dataset.qtype==9){ //Free Numeric Form
+			$("#a-hold-"+sId+qId).find(':input').each(function(){
+				answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
+				answerArray += '"SvEvaCod" : "'+ surveyid+'",';
+				answerArray += '"SvEvaPregCod" : "'+ qId+'",';
+				answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
+				answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
+				answerArray += '"SvTipSccCod" : "'+ sId+'",';
+				answerArray += '"SvEvaResCod" : "1",'; //Aumentar
+				answerArray += '"SvEvaResPregItemCod" : "'+this.value+'",';
+				answerArray += '"SvEvaPregItemCod" : "1",';  
+				answerArray += '"SvEvaResLevelCod" : "1",';
+				answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
+				answerArray += '"SvEvaResComment" : "",';
+				answerArray += '"SvCategCod" : "0"},';
+			});
+		}
 	})
 	var arrayCompleto = answerArray.substring(0, answerArray.length - 1);
 	arrayCompleto += ']';
+	console.log("arraycompleto " + arrayCompleto);
 	$.ajax({
 		type: "POST",
 		headers: {
@@ -354,6 +581,8 @@ function saveSection(){
 		PASAR AL SIGUIENTE SLIDE
 
 		*/
+		//Paso al siguiente slide
+		nextSlide();
 	}).fail(function(){
 		alert("There was a communication problem, please try again.");
 	});
@@ -418,3 +647,28 @@ function getVars(){
 	//Este valor va a parar a la variable "parameters" en la primera línea del javascript
 	return urlObj;
 }
+
+
+function clickScaleOption(qId,num){
+            if($('#li-' + qId + '-'+num).hasClass('liker-active')){
+                //le quito la clase activa.
+                $('#li-' + qId + '-'+num).removeClass('liker-active');
+                $('#li-' + qId + '-'+num).find(":input").each(function(){
+                    //var seleccionado = this.value;
+                     this.checked = false;
+                });
+            }else{
+                //Quita la clase "active" de donde quiera que esté
+                $('#li-' + qId + '-'+num).siblings().removeClass('liker-active');
+                $('#li-' + qId + '-'+num).siblings().find(":input").each(function(){
+                    //var seleccionado = this.value;
+                    this.checked = false;
+                 });
+                //Pone la clase "active" en el seleccionado para colorearlo
+                $('#li-' + qId + '-'+num).addClass('liker-active');
+                $('#li-' + qId + '-'+num).find(":input").each(function(){
+                    //var seleccionado = this.value;
+                    this.checked = true;
+                 });
+            }
+    };

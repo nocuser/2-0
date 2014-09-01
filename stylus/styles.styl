@@ -80,13 +80,13 @@ video
 			width 97%
 			margin-bottom 1.5em
 		.slidesContainer
+			height 15em
+			margin-bottom 1.5em
+			overflow-x hidden
+			overflow-y auto
 			position relative
 			top 1em
-			overflow-y auto
-			overflow-x hidden
-			height 15em
 			width 97%
-			margin-bottom 1.5em
 			.list
 				color color_white
 				display block
@@ -432,6 +432,106 @@ textarea
 	resize none
 	width 350px
 
+.answerHolder
+	margin-bottom 30px
+
+/*Pregunta Slider*/
+.sliderVerticalContainer
+	background url("../img/termomentro_nuevo1.png") no-repeat
+	height 350px
+	margin-left 30px
+	width 120px
+	.eva-range
+		width 310px
+		margin-top 165px
+		margin-left -96px
+		background color_green
+		&.vertical
+			transform rotate(-90deg)
+			z-index 10
+
+/*Pregunta LikerScale*/
+.likerscaleContainer
+	padding 20px
+	font-family Helvetica, Arial, sans-serif
+	color color_green
+	.liker-span
+		margin0 1em
+		&:first-child
+			margin-left 0
+
+.rangeSelector
+	display inline-block
+	padding 0
+	.liker-active
+		background color_green
+		color #fff
+
+.likerScaleOption
+	width 2em
+	height 2em
+	text-align center
+	line-height 2em
+	border-radius 50%
+	background #fff
+	border 1px solid color_green
+	margin 0 .6em
+	display inline-block
+	color color_green
+	position relative
+	cursor pointer
+	&:first-child
+		margin-left 0
+	&:before
+		content ''
+		position absolute
+		top .9em
+		left -1.3em
+		width 1.3em
+		height .1em
+		background color_green
+	&:first-child:before
+		display none
+	.liker-check
+		display none
+
+/*Pregunta Date*/
+.comboboxDay
+	background #fff
+	border 1px solid #ccc
+	border-radius 4px
+	cursor pointer
+	font-size 16px
+	padding 10px
+	margin-left 10px
+.comboboxMonth
+	background #fff
+	border 1px solid #ccc
+	border-radius 4px
+	cursor pointer
+	font-size 16px
+	padding 10px
+	margin-left 10px
+.comboboxYear
+	background #fff
+	border 1px solid #ccc
+	border-radius 4px
+	cursor pointer
+	font-size 16px
+	padding 10px
+	margin-left:10px
+
+/*Pregunta Free NUmeric Form*/
+.freenumericform
+	background #fff
+	border 1px solid #ccc
+	border-radius 4px
+	cursor pointer
+	font-size 16px
+	padding 10px
+	margin-left:10px
+
+
 /*Tabla de pregunta grading*/
 .tg
 	border-collapse collapse
@@ -615,7 +715,6 @@ input[type=checkbox]
 			width auto
 	.playerControls
 		width 1014px
-
 @media screen and (max-width: 1366px)
 	.stageMain
 		width 900px
