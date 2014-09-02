@@ -2,11 +2,13 @@
 var parameters = getVars();
 // Variables Globales - Declaración
 var	activeMedia,
+	alreadyStart,
 	audios,
 	authorizedToPlay = false,
 	ek,
 	gFlag = false,
 	interval,
+	interval_Log_Youtube,
 	interval_onYoutube,
 	isPlaying = false,
 	isPlayingType,
@@ -61,7 +63,7 @@ function _userkeep(){
 		type: "POST",
 		url: "../../aws_userkeep.aspx"
 	}).done(function(){
-		console.log('userkeep excecuted succesfully');
+		return false;
 	}).fail(function(){
 		console.log('Fail to excecute userkeep');
 	})
@@ -678,6 +680,8 @@ function seekYoutubeUpdate(){
 							wasPlayed = true;
 							clearInterval(updateYtbTime);
 							clearInterval(interval_onYoutube);
+							savePresentationLog(slideId,sequenceId,0);
+							clearInterval(interval_Log_Youtube);
 							cleanStage();
 							nextSlide();
 						}
@@ -687,6 +691,8 @@ function seekYoutubeUpdate(){
 							wasPlayed = true;
 							clearInterval(updateYtbTime);
 							clearInterval(interval_onYoutube);
+							savePresentationLog(slideId,sequenceId,0);
+							clearInterval(interval_Log_Youtube);
 						}
 					}
 				}
@@ -803,6 +809,8 @@ function sendLog(id,state){
 	// console.log('Inicio el log con state = '+state);
 	if(state=='pause'){
 		clearInterval(logBot);
+		clearInterval(interval_Log_Youtube);
+		interval_Log_Youtube = setInterval(youtubeSendLog,5000);
 		// console.log('Detuve la ejecución de los logs');
 	}else if(state=='startPlay'){
 		$.ajax({
@@ -820,7 +828,11 @@ function sendLog(id,state){
 					savePresentationLog(id,sequenceId,slidePosition);
 				},5000 /*Ejecuta cada 5 segundos*/);
 			}else if(isPlayingType=='ytb'){
-				console.log('Tengo que guardar un log de youtube. Current = ' + video.getCurrentTime());
+				logBot = setInterval(function(){
+					var curTime = video.getCurrentTime();
+					var slidePosition = Math.floor(curTime);
+					savePresentationLog(id,sequenceId,slidePosition);
+				},5000 /*Ejecuta cada 5 segundos*/);
 			}
 		})
 		.fail(function() {
@@ -833,7 +845,9 @@ function sendLog(id,state){
 				var slidePosition = Math.floor(video.currentTime);
 				savePresentationLog(id,sequenceId,slidePosition);
 			}else if(isPlayingType=='ytb'){
-				console.log('Tengo que guardar un log de youtube. Current = ' + video.getCurrentTime());
+				var curTime = video.getCurrentTime();
+				var slidePosition = Math.floor(curTime);
+				savePresentationLog(id,sequenceId,slidePosition);
 			}
 		},5000 /*Ejecuta cada 5 segundos*/);
 	}
@@ -941,9 +955,11 @@ $.fn.startSlide = function startSlide(){
 			$("#stageMain").append(ytCode);
 		}else{
 			var ytCode = '<embed id="ytVideo" style="top: 0; left: 0;" width="100%" height="100%" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen allowfullscreen="true" allowscriptaccess="always" quality="high" bgcolor="#333333" name="ytVideo" src="http://www.youtube.com/v/'+ytLocation+'?enablejsapi=1&version=3&playerapiid=ytplayer&controls=0&disablekb=1&iv_load_policy=3&modestbranding=1&rel=0&showinfo=0&autoplay=1" type="application/x-shockwave-flash">';
-
 			$("#stageMain").append(ytCode);
 		}
+		alreadyStart = false;
+		interval_onYoutube = setInterval(youtubePlayerReady,10);
+		interval_Log_Youtube = setInterval(youtubeSendLog,5000);
 	}
 
 	//Si es una EVALUACION / ENCUESTA
@@ -966,40 +982,40 @@ $.fn.startSlide = function startSlide(){
 	return false;
 }
 
-function onYouTubePlayerReady(){
-	var slideId = $('#slides li.active').attr('data-sldId');
+function youtubePlayerReady(){
 	video = document.getElementById('ytVideo');
 	video.setVolume(volumeControl.value);
-	video.addEventListener('onStateChange',youtubeStateChange);
-	interval_onYoutube = setInterval(function(){
-		if(video.getPlayerState()!=1){
-			//Si el video NO está reproduciendo
-			$("#playPauseIcon").removeClass('fa-pause').addClass("fa-play"); 	//cambio el ícono de pausa a play neuvamente.
-			$("#fs_playPauseIcon").removeClass('fa-pause').addClass("fa-play"); //cambio el ícono de pausa a play neuvamente.
-		}else{
-			$("#playPauseIcon").removeClass('fa-play').addClass("fa-pause"); 	//cambio el icono de play por el de pausa.
-			$("#fs_playPauseIcon").removeClass('fa-play').addClass("fa-pause"); //cambio el icono de play por el de pausa.
-			seekYoutubeUpdate();
-		}
-	})
+	if(video.getPlayerState()!=1){
+		//Si el video NO está reproduciendo
+		$("#playPauseIcon").removeClass('fa-pause').addClass("fa-play"); 	//cambio el ícono de pausa a play neuvamente.
+		$("#fs_playPauseIcon").removeClass('fa-pause').addClass("fa-play"); //cambio el ícono de pausa a play neuvamente.
+	}else{
+		$("#playPauseIcon").removeClass('fa-play').addClass("fa-pause"); 	//cambio el icono de play por el de pausa.
+		$("#fs_playPauseIcon").removeClass('fa-play').addClass("fa-pause"); //cambio el icono de play por el de pausa.
+		seekYoutubeUpdate();
+	}
 }
 
-function youtubeStateChange(){
+function youtubeSendLog(){
+	//console.log('Intervalo para detectar logs.');
+	video = document.getElementById('ytVideo');
 	var st = video.getPlayerState();
-
+	var slideId = $('#slides li.active').attr('data-sldId');
 	switch(st){
-		case -1:
-			console.log('Player State: '+st);
-			break;
-		case 0:
-			console.log('Player State: '+st);
-			break;
 		case 1:
-			console.log('Player State: '+st);
+			//Reproduciendo
+			if(alreadyStart){
+				sendLog(slideId,'retake');
+				clearInterval(interval_Log_Youtube);
+			}else{
+				sendLog(slideId,'startPlay');
+				clearInterval(interval_Log_Youtube);
+				alreadyStart = true;
+			}
 			break;
 		case 2:
-			console.log('Player State: '+st);
+			//Pausado
+			sendLog(slideId,'pause')
 			break;
-
 	}
 }

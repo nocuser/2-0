@@ -37,3 +37,4 @@
 02/SEPTIEMBRE/2014
 
 - Agregados Logs en las evaluaciones.
+- agregados Logs en videos de youtube.
