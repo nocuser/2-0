@@ -20,6 +20,7 @@ var	activeMedia,
 	setMainsOk,
 	SId,
 	sldId,
+	slideActivo,
 	sliderDuration,
 	fs_sliderDuration,
 	slides,
@@ -119,11 +120,15 @@ function columnSearch(i,j,k){
 
 //Acción al submitir una evaluación
 function evaSubmit(){
-	saveSection();
+	saveSection('submit');
 }
 
 //Función que busca el Survey / Evaluación en la base de datos.
 function getSurvey(SId){
+	//Guardo el log de inicialización del quiz/survey
+	slideActivo = $('#slides').find('.active').attr('data-sldid');
+	console.log('Tengo el slide activo, es el survey! El slide Id es = '+slideActivo+' pero el sID que me traigo es = '+SId);
+	getSurveySequence(slideActivo,'startPlay');
 	/*Consulta*/
 	var url = '../../aws_getpresentation_surveyeva.aspx'
 	var request = new XMLHttpRequest();
@@ -134,7 +139,6 @@ function getSurvey(SId){
 	request.send();
 	if (request.status == 200) {
 		/*Consulta exitosa*/
-		console.log(request.responseText);
 		//Guardo en "sv" el array de datos en formato JSON
 		sv = $.parseJSON(request.responseText);
 		var html = '';
@@ -376,7 +380,7 @@ function getSurvey(SId){
 //Función para avanzar a la siguiente sección de una evaluación / encuesta
 function nextEvaSection(sLong){
 	//Si está activa, guardo la section antes de avanzar a la siguiente página
-	saveSection();
+	saveSection('next');
 	//Cambio la sección activa
 	$('.selected').next().addClass('selected');
 	$('.selected').prev().removeClass('selected');
@@ -386,14 +390,14 @@ function nextEvaSection(sLong){
 
 function prevEvaSection(sLong){
 	// if(_PresentationStatus=='A'){
-		saveSection();
+		saveSection('prev');
 	// }
 	$('.selected').prev().addClass('selected');
 	$('.selected').next().removeClass('selected');
 	setSections(sLong);
 }
 
-function saveSection(){
+function saveSection(mode){
 	var answerArray = '[';
 	var surveyid = $("#eva-stageMain").attr('data-sid');
 	$(".selected").find(".questionTitle").each(function(){
@@ -576,13 +580,11 @@ function saveSection(){
 		url: "../../aws_getpresentation_savesurvey.aspx",
 		timeout: 10000
 	}).done(function(){
-		/*
-
-		PASAR AL SIGUIENTE SLIDE
-
-		*/
-		//Paso al siguiente slide
-		nextSlide();
+		//Si es submit, paso al siguiente slide
+		if(mode=='submit'){
+			getSurveySequence(slideActivo,'finishSurvey');
+			nextSlide();
+		}
 	}).fail(function(){
 		alert("There was a communication problem, please try again.");
 	});
@@ -672,3 +674,36 @@ function clickScaleOption(qId,num){
                  });
             }
     };
+
+function getSurveySequence(id,state){
+	if(state=='startPlay'){
+		$.ajax({
+			url: '../../aws_getpresentation_lastsequence.aspx',
+			type: 'POST',
+			headers:{'str':str,'key':ek,'slideId':id}
+		})
+		.done(function(lastSeq) {
+			// console.log('Se obtuvo la secuencia: '+lastSeq);
+			sequenceId = lastSeq;
+			saveSurveyLog(id,sequenceId,1);
+		});
+	}else if(state=='finishSurvey'){
+		saveSurveyLog(id,sequenceId,0);
+	}
+}
+
+function saveSurveyLog(a,b,c){
+	$.ajax({
+		type: 'POST',
+		url: '../../aws_getpresentation_sendlog.aspx',
+		headers: {
+			'str'		:str,
+			'key'		:ek,
+			'slideId'	:a,
+			'seqId'		:b,
+			'position'	:c
+		}
+	}).done(function(){
+		return false;
+	})
+}

@@ -681,8 +681,6 @@ function seekYoutubeUpdate(){
 							cleanStage();
 							nextSlide();
 						}
-<<<<<<< HEAD
-=======
 					}else{
 						if(video.getPlayerState()==0){ //Finalizó el video
 							isPlaying = false;
@@ -690,7 +688,6 @@ function seekYoutubeUpdate(){
 							clearInterval(updateYtbTime);
 							clearInterval(interval_onYoutube);
 						}
->>>>>>> upstream/master
 					}
 				}
 			},1000);
@@ -817,22 +814,17 @@ function sendLog(id,state){
 			// console.log('Se obtuvo la secuencia: '+lastSeq);
 			sequenceId = lastSeq;
 			savePresentationLog(id,sequenceId,1);
-			logBot = setInterval(function(){
-				if(isPlayingType=='video'){
-
+			if(isPlayingType=='video'){
+				logBot = setInterval(function(){
 					var slidePosition = Math.floor(video.currentTime);
 					savePresentationLog(id,sequenceId,slidePosition);
-
-					//console.log('Tengo que guardar un log de video. Current = ' + Math.floor(video.currentTime));
-				}else if(isPlayingType=='ytb'){
-					console.log('Tengo que guardar un log de youtube. Current = ' + video.getCurrentTime());
-				}else if(isPlayingType=='quiz_sv'){
-					console.log('Tengo que guardar un log de quiz.');
-				}
-			},5000 /*Ejecuta cada 5 segundos*/);
+				},5000 /*Ejecuta cada 5 segundos*/);
+			}else if(isPlayingType=='ytb'){
+				console.log('Tengo que guardar un log de youtube. Current = ' + video.getCurrentTime());
+			}
 		})
 		.fail(function() {
-			console.log("error: no se pudo obtener la secuencia");
+			console.log("error: no se pudo obtener la secuencia del log");
 		});
 	}else if(state=='retake'){
 		// console.log('Tengo que hacer un retake de los logs, con secuencia '+sequenceId);
@@ -842,8 +834,6 @@ function sendLog(id,state){
 				savePresentationLog(id,sequenceId,slidePosition);
 			}else if(isPlayingType=='ytb'){
 				console.log('Tengo que guardar un log de youtube. Current = ' + video.getCurrentTime());
-			}else if(isPlayingType=='quiz_sv'){
-				console.log('Tengo que guardar un log de quiz.');
 			}
 		},5000 /*Ejecuta cada 5 segundos*/);
 	}
@@ -907,6 +897,10 @@ $.fn.startSlide = function startSlide(){
 		video = document.getElementById('video');
 		$("#stage").animate({left:'0px'},'slow');
 		$("#evaStage").animate({left:'-9999px'},'slow');
+		//busco entre todos los hermanos el que haya estado "activo" anteriormente, y le borro el estilo
+		$(this).siblings().removeClass('active');
+		//Luego, a este slide que estoy por reproducir lo resalto en verde en la lista para identificar que se está reproduciendo.
+		$(this).addClass('active');
 		if(_PresentationPlaySlide=='A'){
 			noAudioDuration = 0;
 			//Si es reproducción automática, lo largo con playPause().
@@ -920,6 +914,10 @@ $.fn.startSlide = function startSlide(){
 		var ytLocation = $(this).attr('data-resourcelocation');
 		$("#stage").animate({left:'0px'},'slow');
 		$("#evaStage").animate({left:'-9999px'},'slow');
+		//busco entre todos los hermanos el que haya estado "activo" anteriormente, y le borro el estilo
+		$(this).siblings().removeClass('active');
+		//Luego, a este slide que estoy por reproducir lo resalto en verde en la lista para identificar que se está reproduciendo.
+		$(this).addClass('active');
 		if(_PresentationPlaySlide=='I'){
 			var ytCode = '<embed id="ytVideo" style="top: 0; left: 0;" width="100%" height="100%" frameborder="0" '
 						+'webkitallowfullscreen'
@@ -956,15 +954,14 @@ $.fn.startSlide = function startSlide(){
 		$("#eva-slideTitle").html(slideTitle);
 		$("#stage").animate({left:'-9999px'},'slow');
 		$("#evaStage").animate({left:'0px'},'slow');
-
+		//busco entre todos los hermanos el que haya estado "activo" anteriormente, y le borro el estilo
+		$(this).siblings().removeClass('active');
+		//Luego, a este slide que estoy por reproducir lo resalto en verde en la lista para identificar que se está reproduciendo.
+		$(this).addClass('active');
 		//Ejecuto la creación de la evaluacion / encuesta
 		getSurvey(SId);
 	}
 	getSpeaker(speakerId);
-	//Una vez que haya seteado todo el slide, busco entre todos los hermanos el que haya estado "activo" anteriormente, y le borro el estilo
-	$(this).siblings().removeClass('active');
-	//Luego, a este slide que estoy por reproducir lo resalto en verde en la lista para identificar que se está reproduciendo.
-	$(this).addClass('active');
 	//return false se pone para evitar que se envié algun resultado a la variable destino donde se ejecutó la función. no se necesita nada del otro lado.
 	return false;
 }

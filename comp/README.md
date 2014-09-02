@@ -33,3 +33,7 @@
 - Agregados logs en la reproducción de videos propios. (Youtube Aún con error)
 
 - Agregados las nuevas preguntas: Date, Liker Scale, Free Numeric Form, Slider
+
+02/SEPTIEMBRE/2014
+
+- Agregados Logs en las evaluaciones.
