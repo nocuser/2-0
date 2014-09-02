@@ -4,6 +4,7 @@ var parameters = getVars();
 var	activeMedia,
 	audios,
 	authorizedToPlay = false,
+	continuar = 1,
 	ek,
 	gFlag = false,
 	interval,
@@ -127,7 +128,6 @@ function evaSubmit(){
 function getSurvey(SId){
 	//Guardo el log de inicialización del quiz/survey
 	slideActivo = $('#slides').find('.active').attr('data-sldid');
-	console.log('Tengo el slide activo, es el survey! El slide Id es = '+slideActivo+' pero el sID que me traigo es = '+SId);
 	getSurveySequence(slideActivo,'startPlay');
 	/*Consulta*/
 	var url = '../../aws_getpresentation_surveyeva.aspx'
@@ -344,7 +344,32 @@ function getSurvey(SId){
 							break;
 						case 9: //Free Numeric Form
 	                   		var valresp = sv.Section[i].Question[j].Answer[k].Title;
-	                        html += '<input class="freenumericform" type="number" pattern="[0-9]+([\.|,][0-9]+)?" value="' + valresp + '" />';
+	                   		var minValue = sv.Section[i].Question[j].SvPregInitialValue;
+	                        var maxValue = sv.Section[i].Question[j].SvPregFinalValue;
+	                        var decimales = sv.Section[i].Question[j].SvPregStepValue;
+	                        var mensaje = sv.Section[i].Question[j].SvPregInitialText;
+
+	                        var x = 1;
+                            var DecimalValue = '';
+
+                            while (x<=decimales)
+                            {
+                                DecimalValue += "0";
+                                x += 1;
+                            };
+                            if (DecimalValue== '')
+                            {
+                                DecimalValue = '1';
+                            }
+                            else
+                            {
+                                var len = DecimalValue.length;
+                                len -= 1;
+                                DecimalValue = DecimalValue.substr(1, len);
+                                DecimalValue = '0.' + DecimalValue + '1';
+                            };
+
+	                        html += '<input data-msg="'+mensaje+'" data-qId="'+qId+'" class="freenumericform" type="number" pattern="[0-9]+([\.|,][0-9]+)?" value="' + valresp + '" onblur="checkType24('+ sId +','+qId +');"  min="'+minValue+'" max="'+maxValue+'" step="' + DecimalValue + '"/><div id="error-'+sId+qId+'" class="errorMsg"></div>';
 							break;
 					}
 				
@@ -398,106 +423,126 @@ function prevEvaSection(sLong){
 }
 
 function saveSection(mode){
-	var answerArray = '[';
-	var surveyid = $("#eva-stageMain").attr('data-sid');
-	$(".selected").find(".questionTitle").each(function(){
+	checkResponses();
+	console.log("continuar " + continuar);
+    if (continuar==1)
+    {
+		var answerArray = '[';
+		var surveyid = $("#eva-stageMain").attr('data-sid');
+		$(".selected").find(".questionTitle").each(function(){
 
-		var sId = $(".selected").attr('data-sectionId');
-		var elemento = this;
-		var qId = elemento.dataset.questionid;
-		var isMS = 'false';
-		var suma = 0;
-		console.log("pregunta " + qId + " tipo " + elemento.dataset.qtype);
-		if(elemento.dataset.qtype==1){ //Grading
-			$("table.tg tbody tr.columnBG td.tg-031e").siblings().each(function(){
-				var aId = $(this).parents('tr').children('.tg-031e').children('span').attr('data-answerid');
-				$(this).find(':input').each(function(){
-					if(this.checked){
-						suma = suma + 1
-						answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
-						answerArray += '"SvEvaCod" : "'+ surveyid+'",';
-						answerArray += '"SvEvaPregCod" : "'+ qId+'",';
-						answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
-						answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
-						answerArray += '"SvTipSccCod" : "'+ sId+'",';
-						answerArray += '"SvEvaResCod" : "'+suma+'",'; //Aumentar
-						answerArray += '"SvEvaResPregItemCod" : "'+this.dataset.evarespregitemcod+'",';
-						answerArray += '"SvEvaPregItemCod" : "'+aId+'",';
-						answerArray += '"SvEvaResLevelCod" : "1",';
-						answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
-						answerArray += '"SvEvaResComment" : "",';
-						answerArray += '"SvCategCod" : "0"},';
-					}
+			var sId = $(".selected").attr('data-sectionId');
+			var elemento = this;
+			var qId = elemento.dataset.questionid;
+			var isMS = 'false';
+			var suma = 0;
+			if(elemento.dataset.qtype==1){ //Grading
+				$("table.tg tbody tr.columnBG td.tg-031e").siblings().each(function(){
+					var aId = $(this).parents('tr').children('.tg-031e').children('span').attr('data-answerid');
+					$(this).find(':input').each(function(){
+						if(this.checked){
+							suma = suma + 1
+							answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
+							answerArray += '"SvEvaCod" : "'+ surveyid+'",';
+							answerArray += '"SvEvaPregCod" : "'+ qId+'",';
+							answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
+							answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
+							answerArray += '"SvTipSccCod" : "'+ sId+'",';
+							answerArray += '"SvEvaResCod" : "'+suma+'",'; //Aumentar
+							answerArray += '"SvEvaResPregItemCod" : "'+this.dataset.evarespregitemcod+'",';
+							answerArray += '"SvEvaPregItemCod" : "'+aId+'",';
+							answerArray += '"SvEvaResLevelCod" : "1",';
+							answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
+							answerArray += '"SvEvaResComment" : "",';
+							answerArray += '"SvCategCod" : "0"},';
+						}
+					})
 				})
-			})
-		}
-		if(elemento.dataset.qtype==2){ //MultiPleChoice
-			isMS = elemento.dataset.mselect;
-			if(isMS=='true'){
-				$("#a-hold-"+sId+qId).find(':input').each(function(){
+			}
+			if(elemento.dataset.qtype==2){ //MultiPleChoice
+				isMS = elemento.dataset.mselect;
+				if(isMS=='true'){
+					$("#a-hold-"+sId+qId).find(':input').each(function(){
+						var respuesta = this;
+						if(respuesta.checked){
+							suma = suma + 1
+							answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
+							answerArray += '"SvEvaCod" : "'+ surveyid+'",';
+							answerArray += '"SvEvaPregCod" : "'+ qId+'",';
+							answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
+							answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
+							answerArray += '"SvTipSccCod" : "'+ sId+'",';
+							answerArray += '"SvEvaResCod" : "1",';
+							answerArray += '"SvEvaResPregItemCod" : "'+ respuesta.dataset.answerid+'",';
+							answerArray += '"SvEvaPregItemCod" : "1",';
+							answerArray += '"SvEvaResLevelCod" : "'+suma+'",'; //Aumentar
+							answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
+							answerArray += '"SvEvaResComment" : "",';
+							answerArray += '"SvCategCod" : "0"},';
+						}
+					});
+					isMS = 'false';
+				}else{
+					$("#a-hold-"+sId+qId).find(':input').each(function(){
+						var respuesta = this;
+						if(respuesta.checked){
+							answerArray += '{ "SvEvaCodOrg" : "'+surveyid+'",';
+							answerArray += '"SvEvaCod" : "'+surveyid+'",';
+							answerArray += '"SvEvaPregCod" : "'+qId+'",';
+							answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
+							answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
+							answerArray += '"SvTipSccCod" : "'+sId+'",';
+							answerArray += '"SvEvaResCod" : "1",';
+							answerArray += '"SvEvaResPregItemCod" : "'+respuesta.dataset.answerid+'",';
+							answerArray += '"SvEvaPregItemCod" : "1",';
+							answerArray += '"SvEvaResLevelCod" : "1",';
+							answerArray += '"SvUserIdRes" : "'+_PresentationUserId+'",';
+							answerArray += '"SvEvaResComment" : "",';
+							answerArray += '"SvCategCod" : "0"},';
+						}
+					});
+					isMS = 'false';
+				}
+			}
+			if(elemento.dataset.qtype==4){ //Comment
+				$("#a-hold-"+sId+qId).find('textarea').each(function(){
 					var respuesta = this;
-					if(respuesta.checked){
-						suma = suma + 1
+					answerArray += '{ "SvEvaCodOrg" : "'+surveyid+'",';
+					answerArray += '"SvEvaCod" : "'+surveyid+'",';
+					answerArray += '"SvEvaPregCod" : "'+qId+'",';
+					answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
+					answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
+					answerArray += '"SvTipSccCod" : "'+sId+'",';
+					answerArray += '"SvEvaResCod" : "1",';
+					answerArray += '"SvEvaResPregItemCod" : "'+respuesta.dataset.answerid+'",';
+					answerArray += '"SvEvaPregItemCod" : "1",';
+					answerArray += '"SvEvaResLevelCod" : "1",';
+					answerArray += '"SvUserIdRes" : "'+_PresentationUserId+'",';
+					answerArray += '"SvEvaResComment" : "'+respuesta.value+'",';
+					answerArray += '"SvCategCod" : "0"},';
+				});
+			}
+			if(elemento.dataset.qtype==6){ //LikerScale
+				$("#a-hold-"+sId+qId).find(':input').each(function(){
+					if(this.checked){
+						var cheq = this.value;
 						answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
 						answerArray += '"SvEvaCod" : "'+ surveyid+'",';
 						answerArray += '"SvEvaPregCod" : "'+ qId+'",';
 						answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
 						answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
 						answerArray += '"SvTipSccCod" : "'+ sId+'",';
-						answerArray += '"SvEvaResCod" : "1",';
-						answerArray += '"SvEvaResPregItemCod" : "'+ respuesta.dataset.answerid+'",';
-						answerArray += '"SvEvaPregItemCod" : "1",';
-						answerArray += '"SvEvaResLevelCod" : "'+suma+'",'; //Aumentar
+						answerArray += '"SvEvaResCod" : "1",'; //Aumentar
+						answerArray += '"SvEvaResPregItemCod" : "'+cheq+'",';
+						answerArray += '"SvEvaPregItemCod" : "1",';  
+						answerArray += '"SvEvaResLevelCod" : "1",';
 						answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
 						answerArray += '"SvEvaResComment" : "",';
 						answerArray += '"SvCategCod" : "0"},';
 					}
 				});
-				isMS = 'false';
-			}else{
-				$("#a-hold-"+sId+qId).find(':input').each(function(){
-					var respuesta = this;
-					if(respuesta.checked){
-						answerArray += '{ "SvEvaCodOrg" : "'+surveyid+'",';
-						answerArray += '"SvEvaCod" : "'+surveyid+'",';
-						answerArray += '"SvEvaPregCod" : "'+qId+'",';
-						answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
-						answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
-						answerArray += '"SvTipSccCod" : "'+sId+'",';
-						answerArray += '"SvEvaResCod" : "1",';
-						answerArray += '"SvEvaResPregItemCod" : "'+respuesta.dataset.answerid+'",';
-						answerArray += '"SvEvaPregItemCod" : "1",';
-						answerArray += '"SvEvaResLevelCod" : "1",';
-						answerArray += '"SvUserIdRes" : "'+_PresentationUserId+'",';
-						answerArray += '"SvEvaResComment" : "",';
-						answerArray += '"SvCategCod" : "0"},';
-					}
-				});
-				isMS = 'false';
 			}
-		}
-		if(elemento.dataset.qtype==4){ //Comment
-			$("#a-hold-"+sId+qId).find('textarea').each(function(){
-				var respuesta = this;
-				answerArray += '{ "SvEvaCodOrg" : "'+surveyid+'",';
-				answerArray += '"SvEvaCod" : "'+surveyid+'",';
-				answerArray += '"SvEvaPregCod" : "'+qId+'",';
-				answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
-				answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
-				answerArray += '"SvTipSccCod" : "'+sId+'",';
-				answerArray += '"SvEvaResCod" : "1",';
-				answerArray += '"SvEvaResPregItemCod" : "'+respuesta.dataset.answerid+'",';
-				answerArray += '"SvEvaPregItemCod" : "1",';
-				answerArray += '"SvEvaResLevelCod" : "1",';
-				answerArray += '"SvUserIdRes" : "'+_PresentationUserId+'",';
-				answerArray += '"SvEvaResComment" : "'+respuesta.value+'",';
-				answerArray += '"SvCategCod" : "0"},';
-			});
-		}
-		if(elemento.dataset.qtype==6){ //LikerScale
-			$("#a-hold-"+sId+qId).find(':input').each(function(){
-				if(this.checked){
-					var cheq = this.value;
+			if(elemento.dataset.qtype==7){ //Slider
 					answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
 					answerArray += '"SvEvaCod" : "'+ surveyid+'",';
 					answerArray += '"SvEvaPregCod" : "'+ qId+'",';
@@ -505,16 +550,18 @@ function saveSection(mode){
 					answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
 					answerArray += '"SvTipSccCod" : "'+ sId+'",';
 					answerArray += '"SvEvaResCod" : "1",'; //Aumentar
-					answerArray += '"SvEvaResPregItemCod" : "'+cheq+'",';
+					answerArray += '"SvEvaResPregItemCod" : "'+$("#a-"+sId+qId+'1').val()+'",';
 					answerArray += '"SvEvaPregItemCod" : "1",';  
 					answerArray += '"SvEvaResLevelCod" : "1",';
 					answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
 					answerArray += '"SvEvaResComment" : "",';
 					answerArray += '"SvCategCod" : "0"},';
-				}
-			});
-		}
-		if(elemento.dataset.qtype==7){ //Slider
+			}
+			if(elemento.dataset.qtype==8){ //Date
+				var strDate = '';
+				
+				strDate = $("#comboDay-"+sId+qId+'1').val() +"/" + $("#comboMonth-"+sId+qId+'1').val()+"/"+$("#comboYear-"+sId+qId+'1').val();
+				
 				answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
 				answerArray += '"SvEvaCod" : "'+ surveyid+'",';
 				answerArray += '"SvEvaPregCod" : "'+ qId+'",';
@@ -522,73 +569,53 @@ function saveSection(mode){
 				answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
 				answerArray += '"SvTipSccCod" : "'+ sId+'",';
 				answerArray += '"SvEvaResCod" : "1",'; //Aumentar
-				answerArray += '"SvEvaResPregItemCod" : "'+$("#a-"+sId+qId+'1').val()+'",';
+				answerArray += '"SvEvaResPregItemCod" : "'+strDate+'",';
 				answerArray += '"SvEvaPregItemCod" : "1",';  
 				answerArray += '"SvEvaResLevelCod" : "1",';
 				answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
 				answerArray += '"SvEvaResComment" : "",';
 				answerArray += '"SvCategCod" : "0"},';
-		}
-		if(elemento.dataset.qtype==8){ //Date
-			var strDate = '';
-			
-			strDate = $("#comboDay-"+sId+qId+'1').val() +"/" + $("#comboMonth-"+sId+qId+'1').val()+"/"+$("#comboYear-"+sId+qId+'1').val();
-			
-			answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
-			answerArray += '"SvEvaCod" : "'+ surveyid+'",';
-			answerArray += '"SvEvaPregCod" : "'+ qId+'",';
-			answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
-			answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
-			answerArray += '"SvTipSccCod" : "'+ sId+'",';
-			answerArray += '"SvEvaResCod" : "1",'; //Aumentar
-			answerArray += '"SvEvaResPregItemCod" : "'+strDate+'",';
-			answerArray += '"SvEvaPregItemCod" : "1",';  
-			answerArray += '"SvEvaResLevelCod" : "1",';
-			answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
-			answerArray += '"SvEvaResComment" : "",';
-			answerArray += '"SvCategCod" : "0"},';
-		}
+			}
 
-		if(elemento.dataset.qtype==9){ //Free Numeric Form
-			$("#a-hold-"+sId+qId).find(':input').each(function(){
-				answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
-				answerArray += '"SvEvaCod" : "'+ surveyid+'",';
-				answerArray += '"SvEvaPregCod" : "'+ qId+'",';
-				answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
-				answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
-				answerArray += '"SvTipSccCod" : "'+ sId+'",';
-				answerArray += '"SvEvaResCod" : "1",'; //Aumentar
-				answerArray += '"SvEvaResPregItemCod" : "'+this.value+'",';
-				answerArray += '"SvEvaPregItemCod" : "1",';  
-				answerArray += '"SvEvaResLevelCod" : "1",';
-				answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
-				answerArray += '"SvEvaResComment" : "",';
-				answerArray += '"SvCategCod" : "0"},';
-			});
-		}
-	})
-	var arrayCompleto = answerArray.substring(0, answerArray.length - 1);
-	arrayCompleto += ']';
-	console.log("arraycompleto " + arrayCompleto);
-	$.ajax({
-		type: "POST",
-		headers: {
-		  "key": ek,
-		  "str": str
-		},
-		data: arrayCompleto,
-		url: "../../aws_getpresentation_savesurvey.aspx",
-		timeout: 10000
-	}).done(function(){
-		//Si es submit, paso al siguiente slide
-		if(mode=='submit'){
-			getSurveySequence(slideActivo,'finishSurvey');
-			nextSlide();
-		}
-	}).fail(function(){
-		alert("There was a communication problem, please try again.");
-	});
-
+			if(elemento.dataset.qtype==9){ //Free Numeric Form
+				$("#a-hold-"+sId+qId).find(':input').each(function(){
+					answerArray += '{ "SvEvaCodOrg" : "'+ surveyid+'",';
+					answerArray += '"SvEvaCod" : "'+ surveyid+'",';
+					answerArray += '"SvEvaPregCod" : "'+ qId+'",';
+					answerArray += '"SvQuestionType" : '+elemento.dataset.qtype+',';
+					answerArray += '"SvIsMultiSelect" : "'+isMS+'",';
+					answerArray += '"SvTipSccCod" : "'+ sId+'",';
+					answerArray += '"SvEvaResCod" : "1",'; //Aumentar
+					answerArray += '"SvEvaResPregItemCod" : "'+this.value+'",';
+					answerArray += '"SvEvaPregItemCod" : "1",';  
+					answerArray += '"SvEvaResLevelCod" : "1",';
+					answerArray += '"SvUserIdRes" : "'+ _PresentationUserId+'",';
+					answerArray += '"SvEvaResComment" : "",';
+					answerArray += '"SvCategCod" : "0"},';
+				});
+			}
+		})
+		var arrayCompleto = answerArray.substring(0, answerArray.length - 1);
+		arrayCompleto += ']';
+		$.ajax({
+			type: "POST",
+			headers: {
+			  "key": ek,
+			  "str": str
+			},
+			data: arrayCompleto,
+			url: "../../aws_getpresentation_savesurvey.aspx",
+			timeout: 10000
+		}).done(function(){
+			//Si es submit, paso al siguiente slide
+			if(mode=='submit'){
+				getSurveySequence(slideActivo,'finishSurvey');
+				nextSlide();
+			}
+		}).fail(function(){
+			alert("There was a communication problem, please try again.");
+		});
+	}
 }
 
 //funcion que setea las secciones
@@ -706,4 +733,66 @@ function saveSurveyLog(a,b,c){
 	}).done(function(){
 		return false;
 	})
+}
+
+
+//Función para chequear el tipo numerico. Tiene en cuenta el máximo y el mínimo permitido.
+function checkType24(_sId,_qId) {
+	$("#a-hold-"+_sId+_qId).find(":input").each(function(){
+		var elemento = this;
+		var value  = elemento.value;
+  		var showMsg = '';
+  		var tminValue = parseInt(elemento.min);
+  		var tmaxValue = parseInt(elemento.max);
+  		var tMsg = elemento.dataset.msg;
+
+  		if (value!=='')
+  		{
+        	var v = parseInt(value);
+        	if (v<tminValue) {
+            	showMsg = 'yes';
+        	}
+        	else
+        	{
+            	if (v > tmaxValue) {
+                	showMsg = 'yes';
+            	}
+        	}
+    		if (showMsg =='yes')
+    		{
+        		//alert(tMsg);
+        		$('#error-'+_sId+_qId).text(tMsg);
+        		document.getElementById('a-hold-' + _sId+_qId).focus();
+		        return false;
+    		} 
+    		else
+    		{
+        		$('#error-'+_sId+_qId).text('');
+    		}
+    	}
+});
+}
+
+
+//Función que chequea las respuestas, se debe ejecutar antes de hacer prev, next o submit.
+function checkResponses() {
+    continuar = 1;
+    $(".selected").find(".questionTitle").each(function(){
+			var asId = $(".selected").attr('data-sectionId');
+			var elemento = this;
+			var aqId = elemento.dataset.questionid;
+			
+			if(elemento.dataset.qtype==9){ //Free Numeric Form
+				$("#a-hold-"+asId+aqId).find(':input').each(function(){
+				if (elemento.value!=''){
+                    //Chequeo que esté dentro del rango especifi
+                    checkType24(asId,aqId);
+                    if ($("#error-"+asId+aqId).text()!=='')
+                    {
+                        continuar = 0;
+                    }
+                }
+				});
+			}
+    });
 }

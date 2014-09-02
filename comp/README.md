@@ -38,3 +38,5 @@
 
 - Agregados Logs en las evaluaciones.
 - agregados Logs en videos de youtube.
+
+- Chequeo de dato numerico en pregunta Free Numeric Form
